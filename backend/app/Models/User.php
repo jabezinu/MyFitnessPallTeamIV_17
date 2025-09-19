@@ -6,11 +6,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -18,9 +19,20 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'name',
+        'username',
+        'first_name',
+        'last_name',
         'email',
         'password',
+        'date_of_birth',
+        'gender',
+        'height_cm',
+        'activity_level',
+        'timezone',
+        'profile_image_url',
+        'is_premium',
+        'email_verified',
+        'privacy_settings',
     ];
 
     /**
@@ -43,6 +55,41 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'date_of_birth' => 'date',
+            'is_premium' => 'boolean',
+            'email_verified' => 'boolean',
+            'privacy_settings' => 'array',
         ];
+    }
+
+    // Relationships
+    public function foodDiaryEntries()
+    {
+        return $this->hasMany(FoodDiaryEntry::class);
+    }
+
+    public function exerciseDiaryEntries()
+    {
+        return $this->hasMany(ExerciseDiaryEntry::class);
+    }
+
+    public function userGoals()
+    {
+        return $this->hasMany(UserGoal::class);
+    }
+
+    public function weightLogs()
+    {
+        return $this->hasMany(WeightLog::class);
+    }
+
+    public function recipes()
+    {
+        return $this->hasMany(Recipe::class);
+    }
+
+    public function createdFoodItems()
+    {
+        return $this->hasMany(FoodItem::class, 'created_by');
     }
 }
