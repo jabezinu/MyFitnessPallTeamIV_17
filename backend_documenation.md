@@ -1,5 +1,6 @@
 # MyFitnessPal-Like Backend Documentation
 
+
 ## Table of Contents
 1. [System Overview](#system-overview)
 2. [Architecture](#architecture)
@@ -9,12 +10,13 @@
 6. [Food & Nutrition System](#food--nutrition-system)
 7. [Exercise & Activity Tracking](#exercise--activity-tracking)
 8. [User Management](#user-management)
-9. [Social Features](#social-features)
-10. [External Integrations](#external-integrations)
-11. [Performance & Scalability](#performance--scalability)
-12. [Deployment & Infrastructure](#deployment--infrastructure)
+9. [External Integrations](#external-integrations)
+10. [Performance & Scalability](#performance--scalability)
+11. [Deployment & Infrastructure](#deployment--infrastructure)
+
 
 ## System Overview
+
 
 ### Purpose
 Build a comprehensive nutrition and fitness tracking backend system that allows users to:
@@ -22,19 +24,20 @@ Build a comprehensive nutrition and fitness tracking backend system that allows 
 - Log exercises and physical activities
 - Set and monitor health goals
 - Access a comprehensive food database
-- Connect with friends and share progress
 - Generate reports and insights
+
 
 ### Key Features
 - **Nutrition Tracking**: Calorie counting, macro/micronutrient tracking
 - **Food Database**: Comprehensive database with barcode scanning
 - **Exercise Logging**: Activity tracking with calorie burn calculations
 - **Goal Management**: Weight loss, muscle gain, maintenance goals
-- **Social Platform**: Friend connections, progress sharing
 - **Analytics**: Progress reports, trends, insights
 - **Mobile & Web Support**: Cross-platform API support
 
+
 ## Architecture
+
 
 ### Technology Stack
 ```
@@ -46,6 +49,7 @@ Search Engine: Elasticsearch (for food search)
 Queue System: Redis Queue / AWS SQS
 Monitoring: Application monitoring and logging
 ```
+
 
 ### System Architecture
 ```
@@ -78,9 +82,12 @@ Monitoring: Application monitoring and logging
                     └──────────────────┘
 ```
 
+
 ## Database Design
 
+
 ### Core Entities
+
 
 #### Users Table
 ```sql
@@ -104,6 +111,7 @@ CREATE TABLE users (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 ```
+
 
 #### Food Items Table
 ```sql
@@ -130,9 +138,11 @@ CREATE TABLE food_items (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+
 CREATE INDEX idx_food_items_name ON food_items USING gin(to_tsvector('english', name));
 CREATE INDEX idx_food_items_barcode ON food_items(barcode);
 ```
+
 
 #### Food Categories Table
 ```sql
@@ -144,6 +154,7 @@ CREATE TABLE food_categories (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 ```
+
 
 #### Food Diary Entries
 ```sql
@@ -159,8 +170,10 @@ CREATE TABLE food_diary_entries (
     notes TEXT
 );
 
+
 CREATE INDEX idx_food_diary_user_date ON food_diary_entries(user_id, logged_date);
 ```
+
 
 #### Exercise Database
 ```sql
@@ -177,6 +190,7 @@ CREATE TABLE exercises (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 ```
+
 
 #### Exercise Diary Entries
 ```sql
@@ -196,8 +210,10 @@ CREATE TABLE exercise_diary_entries (
     notes TEXT
 );
 
+
 CREATE INDEX idx_exercise_diary_user_date ON exercise_diary_entries(user_id, logged_date);
 ```
+
 
 #### User Goals
 ```sql
@@ -219,6 +235,7 @@ CREATE TABLE user_goals (
 );
 ```
 
+
 #### Weight Logs
 ```sql
 CREATE TABLE weight_logs (
@@ -230,22 +247,12 @@ CREATE TABLE weight_logs (
     notes TEXT
 );
 
+
 CREATE UNIQUE INDEX idx_weight_logs_user_date ON weight_logs(user_id, logged_date);
 ```
 
-#### User Friendships
-```sql
-CREATE TABLE friendships (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    requester_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    addressee_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    status VARCHAR(20) DEFAULT 'pending', -- pending, accepted, blocked
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    
-    UNIQUE(requester_id, addressee_id)
-);
-```
+
+
 
 #### Recipes
 ```sql
@@ -264,6 +271,7 @@ CREATE TABLE recipes (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+
 CREATE TABLE recipe_ingredients (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     recipe_id UUID NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
@@ -273,7 +281,9 @@ CREATE TABLE recipe_ingredients (
 );
 ```
 
+
 ## Authentication & Security
+
 
 ### JWT Token Structure
 ```json
@@ -286,7 +296,9 @@ CREATE TABLE recipe_ingredients (
 }
 ```
 
+
 ### Security Endpoints
+
 
 #### POST /api/auth/register
 ```json
@@ -299,6 +311,7 @@ CREATE TABLE recipe_ingredients (
 }
 ```
 
+
 #### POST /api/auth/login
 ```json
 {
@@ -307,12 +320,14 @@ CREATE TABLE recipe_ingredients (
 }
 ```
 
+
 #### POST /api/auth/refresh-token
 ```json
 {
   "refresh_token": "refresh_token_here"
 }
 ```
+
 
 ### Security Features
 - Password hashing using bcrypt (minimum 12 rounds)
@@ -322,12 +337,16 @@ CREATE TABLE recipe_ingredients (
 - Password reset with secure tokens
 - Account lockout after failed attempts
 
+
 ## Core APIs
+
 
 ### User Profile APIs
 
+
 #### GET /api/users/profile
 Returns current user's profile information.
+
 
 #### PUT /api/users/profile
 ```json
@@ -340,10 +359,13 @@ Returns current user's profile information.
 }
 ```
 
+
 #### POST /api/users/profile-image
 Upload profile image (multipart/form-data)
 
+
 ### Daily Summary API
+
 
 #### GET /api/users/daily-summary?date=2024-01-15
 ```json
@@ -377,9 +399,12 @@ Upload profile image (multipart/form-data)
 }
 ```
 
+
 ## Food & Nutrition System
 
+
 ### Food Search API
+
 
 #### GET /api/foods/search?q=apple&limit=20&offset=0
 ```json
@@ -407,8 +432,10 @@ Upload profile image (multipart/form-data)
 }
 ```
 
+
 #### GET /api/foods/barcode/{barcode}
 Returns food item by barcode scan.
+
 
 #### POST /api/foods
 Create custom food item.
@@ -424,10 +451,13 @@ Create custom food item.
 }
 ```
 
+
 ### Food Diary APIs
+
 
 #### GET /api/food-diary?date=2024-01-15
 Returns all food entries for a specific date.
+
 
 #### POST /api/food-diary
 ```json
@@ -441,13 +471,17 @@ Returns all food entries for a specific date.
 }
 ```
 
+
 #### PUT /api/food-diary/{entry_id}
 Update existing food diary entry.
+
 
 #### DELETE /api/food-diary/{entry_id}
 Delete food diary entry.
 
+
 ### Quick Add APIs
+
 
 #### POST /api/food-diary/quick-add
 ```json
@@ -459,20 +493,27 @@ Delete food diary entry.
 }
 ```
 
+
 ## Exercise & Activity Tracking
 
+
 ### Exercise Database APIs
+
 
 #### GET /api/exercises/search?q=running&category=cardio
 Search exercises by name and category.
 
+
 #### GET /api/exercises/categories
 Return all exercise categories.
 
+
 ### Exercise Diary APIs
+
 
 #### GET /api/exercise-diary?date=2024-01-15
 Return all exercise entries for a date.
+
 
 #### POST /api/exercise-diary
 ```json
@@ -485,6 +526,7 @@ Return all exercise entries for a date.
 }
 ```
 
+
 #### POST /api/exercise-diary/cardio
 ```json
 {
@@ -495,6 +537,7 @@ Return all exercise entries for a date.
   "logged_date": "2024-01-15"
 }
 ```
+
 
 #### POST /api/exercise-diary/strength
 ```json
@@ -507,12 +550,16 @@ Return all exercise entries for a date.
 }
 ```
 
+
 ## User Management
+
 
 ### Goals Management
 
+
 #### GET /api/users/goals
 Return current active goals.
+
 
 #### POST /api/users/goals
 ```json
@@ -526,10 +573,13 @@ Return current active goals.
 }
 ```
 
+
 ### Weight Tracking
+
 
 #### GET /api/users/weight-logs?period=30
 Return weight logs for specified period.
+
 
 #### POST /api/users/weight-logs
 ```json
@@ -540,7 +590,9 @@ Return weight logs for specified period.
 }
 ```
 
+
 ### Progress Reports
+
 
 #### GET /api/users/progress?period=weekly&weeks=12
 ```json
@@ -564,81 +616,11 @@ Return weight logs for specified period.
 }
 ```
 
-## Social Features
 
-### Friend Management
 
-#### GET /api/friends
-Return user's friends list.
-
-#### POST /api/friends/request
-```json
-{
-  "username": "friend_username"
-}
-```
-
-#### PUT /api/friends/{friendship_id}/accept
-Accept friend request.
-
-#### DELETE /api/friends/{friendship_id}
-Remove friend or reject request.
-
-### News Feed
-
-#### GET /api/newsfeed?limit=20&offset=0
-```json
-{
-  "posts": [
-    {
-      "id": "uuid",
-      "user": {
-        "username": "john_doe",
-        "profile_image": "url"
-      },
-      "type": "weight_milestone",
-      "content": "Lost 5 pounds this month!",
-      "data": {
-        "weight_lost": 2.3,
-        "milestone": "5_pounds"
-      },
-      "likes_count": 12,
-      "comments_count": 3,
-      "created_at": "2024-01-15T10:30:00Z"
-    }
-  ]
-}
-```
-
-### Achievement System
-
-#### GET /api/users/achievements
-Return user's achievements and badges.
-
-```json
-{
-  "achievements": [
-    {
-      "id": "uuid",
-      "name": "7 Day Streak",
-      "description": "Logged food for 7 consecutive days",
-      "icon_url": "url",
-      "earned_at": "2024-01-15T10:30:00Z",
-      "category": "consistency"
-    }
-  ],
-  "progress": [
-    {
-      "achievement_id": "uuid",
-      "name": "30 Day Streak",
-      "current_progress": 15,
-      "required_progress": 30
-    }
-  ]
-}
-```
 
 ## External Integrations
+
 
 ### Barcode Scanning
 Integration with barcode databases:
@@ -646,18 +628,22 @@ Integration with barcode databases:
 - USDA Food Database
 - Custom barcode database
 
+
 ### Fitness Device Integration
 - Fitbit API integration
 - Apple Health integration
 - Google Fit integration
 - Generic webhook support for IoT devices
 
+
 ### Third-party Authentication
 - Google OAuth 2.0
 - Facebook Login
 - Apple Sign In
 
+
 ## Performance & Scalability
+
 
 ### Caching Strategy
 ```yaml
@@ -668,17 +654,20 @@ Exercise Database: Application cache (24 hour TTL)
 User Profiles: Application cache (15 min TTL)
 ```
 
+
 ### Database Optimization
 - Proper indexing on frequently queried columns
 - Partitioning for large tables (food_diary_entries by date)
 - Read replicas for analytics queries
 - Connection pooling
 
+
 ### API Performance
 - Response compression (gzip)
 - Pagination for large datasets
 - Async processing for heavy operations
 - Rate limiting by user tier
+
 
 ### Monitoring & Logging
 - Application performance monitoring
@@ -687,7 +676,9 @@ User Profiles: Application cache (15 min TTL)
 - Error tracking and alerting
 - User activity analytics
 
+
 ## Deployment & Infrastructure
+
 
 ### Environment Configuration
 ```yaml
@@ -696,11 +687,13 @@ DATABASE_URL: postgresql://localhost/myfitnesspal_dev
 REDIS_URL: redis://localhost:6379
 JWT_SECRET: dev_secret_key
 
+
 # Production
 DATABASE_URL: postgresql://prod-db/myfitnesspal
 REDIS_URL: redis://prod-redis:6379
 JWT_SECRET: secure_production_secret
 ```
+
 
 ### Docker Configuration
 ```dockerfile
@@ -714,11 +707,13 @@ EXPOSE 3000
 CMD ["npm", "start"]
 ```
 
+
 ### Database Migrations
 Implement proper migration system for schema changes:
 - Version controlled migrations
 - Rollback capabilities
 - Production migration procedures
+
 
 ### Health Checks
 ```yaml
@@ -729,7 +724,9 @@ GET /health:
   - System resources
 ```
 
+
 ## API Documentation Standards
+
 
 ### Response Format
 ```json
@@ -740,6 +737,7 @@ GET /health:
   "timestamp": "2024-01-15T10:30:00Z"
 }
 ```
+
 
 ### Error Response Format
 ```json
@@ -757,6 +755,7 @@ GET /health:
 }
 ```
 
+
 ### Status Codes
 - 200: Success
 - 201: Created
@@ -767,7 +766,9 @@ GET /health:
 - 429: Too Many Requests
 - 500: Internal Server Error
 
+
 ## Testing Strategy
+
 
 ### Unit Tests
 - Service layer testing
@@ -775,11 +776,13 @@ GET /health:
 - Utility function testing
 - Authentication logic
 
+
 ### Integration Tests
 - API endpoint testing
 - Database integration
 - External service mocking
 - End-to-end workflows
+
 
 ### Performance Tests
 - Load testing for peak usage
@@ -787,9 +790,12 @@ GET /health:
 - API response time benchmarks
 - Memory usage optimization
 
+
 ---
 
+
 ## Development Phases
+
 
 ### Phase 1: Core Foundation (Weeks 1-4)
 - User authentication system
@@ -797,11 +803,13 @@ GET /health:
 - Database setup and migrations
 - Core API structure
 
+
 ### Phase 2: Food System (Weeks 5-8)
 - Food database implementation
 - Food search functionality
 - Food diary CRUD operations
 - Barcode scanning integration
+
 
 ### Phase 3: Exercise System (Weeks 9-10)
 - Exercise database
@@ -809,22 +817,20 @@ GET /health:
 - Calorie burn calculations
 - Activity tracking
 
+
 ### Phase 4: Goals & Progress (Weeks 11-12)
 - Goal setting system
 - Progress tracking
 - Weight logging
 - Dashboard analytics
 
-### Phase 5: Social Features (Weeks 13-14)
-- Friend system
-- News feed
-- Achievement system
-- Sharing functionality
 
-### Phase 6: Polish & Optimization (Weeks 15-16)
+### Phase 5: Polish & Optimization (Weeks 15-16)
 - Performance optimization
 - Security hardening
 - Documentation completion
 - Deployment preparation
 
+
 This documentation provides a comprehensive guide for building a MyFitnessPal-like backend system. The senior developer can use this as a roadmap to implement all core features while maintaining scalability and performance standards.
+
