@@ -1,3 +1,108 @@
+# MyFitnessPal-Like Backend API
+
+A comprehensive nutrition and fitness tracking backend system built with Laravel.
+
+## Features
+
+- **User Authentication**: JWT-based authentication using Laravel Sanctum
+- **Nutrition Tracking**: Calorie counting, macro/micronutrient tracking
+- **Food Database**: Comprehensive database with search functionality
+- **Exercise Logging**: Activity tracking with calorie burn calculations
+- **Goal Management**: Weight loss, muscle gain, maintenance goals
+- **Progress Analytics**: Dashboard with daily summaries and trends
+- **Weight Tracking**: Historical weight logs and progress monitoring
+
+## API Endpoints
+
+### Authentication
+- `POST /api/auth/register` - Register new user
+- `POST /api/auth/login` - Login user
+- `POST /api/auth/logout` - Logout user (requires auth)
+
+### User Profile
+- `GET /api/users/profile` - Get user profile (requires auth)
+- `PUT /api/users/profile` - Update user profile (requires auth)
+
+### Food System
+- `GET /api/foods/search?q=apple&limit=20&offset=0` - Search food items
+- `POST /api/foods` - Create custom food item (requires auth)
+- `GET /api/food-diary?date=2024-01-15` - Get food diary entries (requires auth)
+- `POST /api/food-diary` - Add food diary entry (requires auth)
+- `PUT /api/food-diary/{entry}` - Update food diary entry (requires auth)
+- `DELETE /api/food-diary/{entry}` - Delete food diary entry (requires auth)
+
+### Exercise System
+- `GET /api/exercises/search?q=running&category=cardio` - Search exercises
+- `GET /api/exercises/categories` - Get exercise categories
+- `GET /api/exercise-diary?date=2024-01-15` - Get exercise diary entries (requires auth)
+- `POST /api/exercise-diary` - Add exercise diary entry (requires auth)
+- `PUT /api/exercise-diary/{entry}` - Update exercise diary entry (requires auth)
+- `DELETE /api/exercise-diary/{entry}` - Delete exercise diary entry (requires auth)
+
+### Goals & Progress
+- `GET /api/users/goals` - Get user goals (requires auth)
+- `POST /api/users/goals` - Create/update user goal (requires auth)
+- `PUT /api/users/goals/{goal}` - Update user goal (requires auth)
+- `GET /api/users/weight-logs?period=30` - Get weight logs (requires auth)
+- `POST /api/users/weight-logs` - Add weight log (requires auth)
+- `GET /api/users/daily-summary?date=2024-01-15` - Get daily summary (requires auth)
+
+## Installation
+
+1. Clone the repository
+2. Run `composer install`
+3. Copy `.env.example` to `.env` and configure your database
+4. Run `php artisan migrate`
+5. Run `php artisan serve`
+
+## Database Schema
+
+The application uses SQLite with the following main tables:
+- `users` - User accounts and profiles
+- `food_items` - Food database
+- `food_diary_entries` - User's food consumption logs
+- `exercises` - Exercise database
+- `exercise_diary_entries` - User's exercise logs
+- `user_goals` - User's fitness goals
+- `weight_logs` - User's weight tracking
+
+## Security
+
+- JWT authentication using Laravel Sanctum
+- Input validation on all endpoints
+- Authorization checks for user-owned resources
+- Password hashing with bcrypt
+- Rate limiting on authentication endpoints
+
+## Response Format
+
+All API responses follow a consistent format:
+
+```json
+{
+  "success": true,
+  "data": { ... },
+  "message": "Operation completed successfully",
+  "timestamp": "2024-01-15T10:30:00Z"
+}
+```
+
+Error responses:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Invalid input data",
+    "details": { ... }
+  },
+  "timestamp": "2024-01-15T10:30:00Z"
+}
+```
+
+---
+
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
 <p align="center">
