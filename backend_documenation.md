@@ -10,9 +10,6 @@
 6. [Food & Nutrition System](#food--nutrition-system)
 7. [Exercise & Activity Tracking](#exercise--activity-tracking)
 8. [User Management](#user-management)
-9. [External Integrations](#external-integrations)
-10. [Performance & Scalability](#performance--scalability)
-11. [Deployment & Infrastructure](#deployment--infrastructure)
 
 
 ## System Overview
@@ -44,10 +41,6 @@ Build a comprehensive nutrition and fitness tracking backend system that allows 
 Backend Framework: [Your chosen framework - e.g., Node.js/Express, Django, Spring Boot]
 Database: PostgreSQL (Primary) + Redis (Caching)
 Authentication: JWT + OAuth 2.0
-File Storage: AWS S3 / CloudStorage
-Search Engine: Elasticsearch (for food search)
-Queue System: Redis Queue / AWS SQS
-Monitoring: Application monitoring and logging
 ```
 
 
@@ -56,30 +49,30 @@ Monitoring: Application monitoring and logging
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
 │   Mobile App    │    │    Web Client    │    │  Admin Panel    │
 └─────────────────┘    └──────────────────┘    └─────────────────┘
-         │                       │                       │
-         └───────────────────────┼───────────────────────┘
-                                 │
-                    ┌──────────────────┐
-                    │   Load Balancer  │
-                    └──────────────────┘
-                                 │
-                    ┌──────────────────┐
-                    │   API Gateway    │
-                    └──────────────────┘
-                                 │
-         ┌───────────────────────┼───────────────────────┐
-         │                       │                       │
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│ Authentication  │    │   Core API       │    │  External APIs  │
-│   Service       │    │   Service        │    │   Service       │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-         │                       │                       │
-         └───────────────────────┼───────────────────────┘
-                                 │
-                    ┌──────────────────┐
-                    │   Database       │
-                    │   PostgreSQL     │
-                    └──────────────────┘
+          │                       │                       │
+          └───────────────────────┼───────────────────────┘
+                                  │
+                     ┌──────────────────┐
+                     │   Load Balancer  │
+                     └──────────────────┘
+                                  │
+                     ┌──────────────────┐
+                     │   API Gateway    │
+                     └──────────────────┘
+                                  │
+          ┌───────────────────────┼───────────────────────┐
+          │                       │                       │
+┌─────────────────┐    ┌──────────────────┐
+│ Authentication  │    │   Core API       │
+│   Service       │    │   Service        │
+└─────────────────┘    └──────────────────┘
+          │                       │
+          └───────────────────────┼───────────────────────┘
+                                  │
+                     ┌──────────────────┐
+                     │   Database       │
+                     │   sqlite         │
+                     └──────────────────┘
 ```
 
 
@@ -619,110 +612,10 @@ Return weight logs for specified period.
 
 
 
-## External Integrations
 
 
-### Barcode Scanning
-Integration with barcode databases:
-- OpenFoodFacts API
-- USDA Food Database
-- Custom barcode database
 
 
-### Fitness Device Integration
-- Fitbit API integration
-- Apple Health integration
-- Google Fit integration
-- Generic webhook support for IoT devices
-
-
-### Third-party Authentication
-- Google OAuth 2.0
-- Facebook Login
-- Apple Sign In
-
-
-## Performance & Scalability
-
-
-### Caching Strategy
-```yaml
-User Sessions: Redis (30 min TTL)
-Food Search Results: Redis (1 hour TTL)
-Daily Summaries: Redis (5 min TTL)
-Exercise Database: Application cache (24 hour TTL)
-User Profiles: Application cache (15 min TTL)
-```
-
-
-### Database Optimization
-- Proper indexing on frequently queried columns
-- Partitioning for large tables (food_diary_entries by date)
-- Read replicas for analytics queries
-- Connection pooling
-
-
-### API Performance
-- Response compression (gzip)
-- Pagination for large datasets
-- Async processing for heavy operations
-- Rate limiting by user tier
-
-
-### Monitoring & Logging
-- Application performance monitoring
-- Database query monitoring
-- API endpoint response times
-- Error tracking and alerting
-- User activity analytics
-
-
-## Deployment & Infrastructure
-
-
-### Environment Configuration
-```yaml
-# Development
-DATABASE_URL: postgresql://localhost/myfitnesspal_dev
-REDIS_URL: redis://localhost:6379
-JWT_SECRET: dev_secret_key
-
-
-# Production
-DATABASE_URL: postgresql://prod-db/myfitnesspal
-REDIS_URL: redis://prod-redis:6379
-JWT_SECRET: secure_production_secret
-```
-
-
-### Docker Configuration
-```dockerfile
-# Dockerfile example
-FROM node:18-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
-COPY . .
-EXPOSE 3000
-CMD ["npm", "start"]
-```
-
-
-### Database Migrations
-Implement proper migration system for schema changes:
-- Version controlled migrations
-- Rollback capabilities
-- Production migration procedures
-
-
-### Health Checks
-```yaml
-GET /health:
-  - Database connectivity
-  - Redis connectivity
-  - External API availability
-  - System resources
-```
 
 
 ## API Documentation Standards
@@ -826,11 +719,9 @@ GET /health:
 
 
 ### Phase 5: Polish & Optimization (Weeks 15-16)
-- Performance optimization
 - Security hardening
 - Documentation completion
-- Deployment preparation
 
 
-This documentation provides a comprehensive guide for building a MyFitnessPal-like backend system. The senior developer can use this as a roadmap to implement all core features while maintaining scalability and performance standards.
+This documentation provides a comprehensive guide for building a MyFitnessPal-like backend system. The senior developer can use this as a roadmap to implement all core features.
 
