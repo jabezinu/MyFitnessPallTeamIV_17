@@ -142,9 +142,6 @@ Upload profile image (multipart/form-data)
 }
 ```
 
-#### GET /api/foods/barcode/{barcode}
-Returns food item by barcode scan.
-
 #### POST /api/foods
 Create custom food item.
 ```json

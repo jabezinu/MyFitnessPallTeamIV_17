@@ -26,7 +26,7 @@ Build a comprehensive nutrition and fitness tracking backend system that allows 
 
 ### Key Features
 - **Nutrition Tracking**: Calorie counting, macro/micronutrient tracking
-- **Food Database**: Comprehensive database with barcode scanning
+- **Food Database**: Comprehensive database
 - **Exercise Logging**: Activity tracking with calorie burn calculations
 - **Goal Management**: Weight loss, muscle gain, maintenance goals
 - **Analytics**: Progress reports, trends, insights
@@ -46,14 +46,14 @@ Authentication: JWT + OAuth 2.0
 
 ### System Architecture
 ```
-┌──────────────────┐
-│   Load Balancer  │
-└──────────────────┘
-          │
-┌──────────────────┐
-│   API Gateway    │
-└──────────────────┘
-          │
+                      ┌──────────────────┐
+                      │   Load Balancer  │
+                      └──────────────────┘
+                              │
+                      ┌──────────────────┐
+                      │   API Gateway    │
+                      └──────────────────┘
+                                │
 ┌─────────────────┐    ┌──────────────────┐
 │ Authentication  │    │   Core API       │
 │   Service       │    │   Service        │
@@ -104,7 +104,6 @@ CREATE TABLE food_items (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     brand TEXT,
-    barcode TEXT,
     serving_size REAL,
     serving_unit TEXT,
     calories_per_serving REAL,
@@ -125,7 +124,6 @@ CREATE TABLE food_items (
 
 
 CREATE INDEX idx_food_items_name ON food_items(name);
-CREATE INDEX idx_food_items_barcode ON food_items(barcode);
 ```
 
 
@@ -273,7 +271,7 @@ CREATE TABLE recipe_ingredients (
 ### JWT Token Structure
 ```json
 {
-  "user_id": "uuid",
+  "user_id": 1,
   "email": "user@example.com",
   "is_premium": false,
   "iat": 1234567890,
@@ -396,7 +394,7 @@ Upload profile image (multipart/form-data)
 {
   "results": [
     {
-      "id": "uuid",
+      "id": 1,
       "name": "Apple, Raw",
       "brand": null,
       "calories_per_serving": 95,
@@ -416,10 +414,6 @@ Upload profile image (multipart/form-data)
   "per_page": 20
 }
 ```
-
-
-#### GET /api/foods/barcode/{barcode}
-Returns food item by barcode scan.
 
 
 #### POST /api/foods
@@ -447,7 +441,7 @@ Returns all food entries for a specific date.
 #### POST /api/food-diary
 ```json
 {
-  "food_item_id": "uuid",
+  "food_item_id": 1,
   "meal_type": "breakfast",
   "quantity": 1.5,
   "serving_unit": "cup",
@@ -503,7 +497,7 @@ Return all exercise entries for a date.
 #### POST /api/exercise-diary
 ```json
 {
-  "exercise_id": "uuid",
+  "exercise_id": 1,
   "duration_minutes": 30,
   "calories_burned": 300,
   "logged_date": "2024-01-15",
@@ -515,7 +509,7 @@ Return all exercise entries for a date.
 #### POST /api/exercise-diary/cardio
 ```json
 {
-  "exercise_id": "uuid",
+  "exercise_id": 1,
   "duration_minutes": 45,
   "distance": 5.2,
   "distance_unit": "km",
@@ -527,7 +521,7 @@ Return all exercise entries for a date.
 #### POST /api/exercise-diary/strength
 ```json
 {
-  "exercise_id": "uuid",
+  "exercise_id": 1,
   "sets": 3,
   "reps": 12,
   "weight_used": 50,
@@ -693,7 +687,6 @@ Return weight logs for specified period.
 - Food database implementation
 - Food search functionality
 - Food diary CRUD operations
-- Barcode scanning integration
 
 
 ### Phase 3: Exercise System (Weeks 9-10)
