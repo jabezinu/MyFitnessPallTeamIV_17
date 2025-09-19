@@ -39,29 +39,21 @@ Build a comprehensive nutrition and fitness tracking backend system that allows 
 ### Technology Stack
 ```
 Backend Framework: [Your chosen framework - e.g., Node.js/Express, Django, Spring Boot]
-Database: PostgreSQL (Primary) + Redis (Caching)
+Database: SQLite
 Authentication: JWT + OAuth 2.0
 ```
 
 
 ### System Architecture
 ```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Mobile App    │    │    Web Client    │    │  Admin Panel    │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-          │                       │                       │
-          └───────────────────────┼───────────────────────┘
-                                  │
-                     ┌──────────────────┐
-                     │   Load Balancer  │
-                     └──────────────────┘
-                                  │
-                     ┌──────────────────┐
-                     │   API Gateway    │
-                     └──────────────────┘
-                                  │
-          ┌───────────────────────┼───────────────────────┐
-          │                       │                       │
+┌──────────────────┐
+│   Load Balancer  │
+└──────────────────┘
+          │
+┌──────────────────┐
+│   API Gateway    │
+└──────────────────┘
+          │
 ┌─────────────────┐    ┌──────────────────┐
 │ Authentication  │    │   Core API       │
 │   Service       │    │   Service        │
@@ -71,7 +63,7 @@ Authentication: JWT + OAuth 2.0
                                   │
                      ┌──────────────────┐
                      │   Database       │
-                     │   sqlite         │
+                     │   SQLite         │
                      └──────────────────┘
 ```
 
@@ -85,23 +77,23 @@ Authentication: JWT + OAuth 2.0
 #### Users Table
 ```sql
 CREATE TABLE users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    email VARCHAR(255) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    username VARCHAR(50) UNIQUE NOT NULL,
-    first_name VARCHAR(100),
-    last_name VARCHAR(100),
-    date_of_birth DATE,
-    gender VARCHAR(10),
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    username TEXT UNIQUE NOT NULL,
+    first_name TEXT,
+    last_name TEXT,
+    date_of_birth TEXT,
+    gender TEXT,
     height_cm INTEGER,
-    activity_level VARCHAR(20) DEFAULT 'sedentary',
-    timezone VARCHAR(50),
+    activity_level TEXT DEFAULT 'sedentary',
+    timezone TEXT,
     profile_image_url TEXT,
-    is_premium BOOLEAN DEFAULT false,
-    email_verified BOOLEAN DEFAULT false,
-    privacy_settings JSONB,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    is_premium INTEGER DEFAULT 0,
+    email_verified INTEGER DEFAULT 0,
+    privacy_settings TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
@@ -109,30 +101,30 @@ CREATE TABLE users (
 #### Food Items Table
 ```sql
 CREATE TABLE food_items (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(255) NOT NULL,
-    brand VARCHAR(255),
-    barcode VARCHAR(50),
-    serving_size DECIMAL(10,2),
-    serving_unit VARCHAR(50),
-    calories_per_serving DECIMAL(8,2),
-    protein_g DECIMAL(8,2),
-    carbs_g DECIMAL(8,2),
-    fat_g DECIMAL(8,2),
-    fiber_g DECIMAL(8,2),
-    sugar_g DECIMAL(8,2),
-    sodium_mg DECIMAL(8,2),
-    vitamins JSONB,
-    minerals JSONB,
-    food_category_id UUID REFERENCES food_categories(id),
-    verified BOOLEAN DEFAULT false,
-    created_by UUID REFERENCES users(id),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    brand TEXT,
+    barcode TEXT,
+    serving_size REAL,
+    serving_unit TEXT,
+    calories_per_serving REAL,
+    protein_g REAL,
+    carbs_g REAL,
+    fat_g REAL,
+    fiber_g REAL,
+    sugar_g REAL,
+    sodium_mg REAL,
+    vitamins TEXT,
+    minerals TEXT,
+    food_category_id INTEGER REFERENCES food_categories(id),
+    verified INTEGER DEFAULT 0,
+    created_by INTEGER REFERENCES users(id),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 
-CREATE INDEX idx_food_items_name ON food_items USING gin(to_tsvector('english', name));
+CREATE INDEX idx_food_items_name ON food_items(name);
 CREATE INDEX idx_food_items_barcode ON food_items(barcode);
 ```
 
@@ -140,11 +132,11 @@ CREATE INDEX idx_food_items_barcode ON food_items(barcode);
 #### Food Categories Table
 ```sql
 CREATE TABLE food_categories (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(100) NOT NULL,
-    parent_id UUID REFERENCES food_categories(id),
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    parent_id INTEGER REFERENCES food_categories(id),
     icon_url TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
@@ -152,14 +144,14 @@ CREATE TABLE food_categories (
 #### Food Diary Entries
 ```sql
 CREATE TABLE food_diary_entries (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    food_item_id UUID NOT NULL REFERENCES food_items(id),
-    meal_type VARCHAR(20) NOT NULL, -- breakfast, lunch, dinner, snack
-    quantity DECIMAL(10,2) NOT NULL,
-    serving_unit VARCHAR(50) NOT NULL,
-    logged_date DATE NOT NULL,
-    logged_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    food_item_id INTEGER NOT NULL REFERENCES food_items(id),
+    meal_type TEXT NOT NULL, -- breakfast, lunch, dinner, snack
+    quantity REAL NOT NULL,
+    serving_unit TEXT NOT NULL,
+    logged_date TEXT NOT NULL,
+    logged_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     notes TEXT
 );
 
@@ -171,16 +163,16 @@ CREATE INDEX idx_food_diary_user_date ON food_diary_entries(user_id, logged_date
 #### Exercise Database
 ```sql
 CREATE TABLE exercises (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(255) NOT NULL,
-    category VARCHAR(100) NOT NULL, -- cardio, strength, flexibility, sports
-    met_value DECIMAL(4,2), -- Metabolic equivalent
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    category TEXT NOT NULL, -- cardio, strength, flexibility, sports
+    met_value REAL, -- Metabolic equivalent
     description TEXT,
     instructions TEXT,
-    muscle_groups TEXT[],
-    equipment_needed TEXT[],
-    difficulty_level VARCHAR(20),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    muscle_groups TEXT,
+    equipment_needed TEXT,
+    difficulty_level TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
@@ -188,18 +180,18 @@ CREATE TABLE exercises (
 #### Exercise Diary Entries
 ```sql
 CREATE TABLE exercise_diary_entries (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    exercise_id UUID NOT NULL REFERENCES exercises(id),
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    exercise_id INTEGER NOT NULL REFERENCES exercises(id),
     duration_minutes INTEGER,
-    calories_burned DECIMAL(8,2),
+    calories_burned REAL,
     sets INTEGER,
     reps INTEGER,
-    weight_used DECIMAL(8,2),
-    distance DECIMAL(10,2),
-    distance_unit VARCHAR(20),
-    logged_date DATE NOT NULL,
-    logged_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    weight_used REAL,
+    distance REAL,
+    distance_unit TEXT,
+    logged_date TEXT NOT NULL,
+    logged_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     notes TEXT
 );
 
@@ -211,20 +203,20 @@ CREATE INDEX idx_exercise_diary_user_date ON exercise_diary_entries(user_id, log
 #### User Goals
 ```sql
 CREATE TABLE user_goals (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    goal_type VARCHAR(50) NOT NULL, -- weight_loss, weight_gain, maintain, muscle_gain
-    target_weight_kg DECIMAL(5,2),
-    target_date DATE,
-    weekly_goal_kg DECIMAL(4,2),
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    goal_type TEXT NOT NULL, -- weight_loss, weight_gain, maintain, muscle_gain
+    target_weight_kg REAL,
+    target_date TEXT,
+    weekly_goal_kg REAL,
     daily_calorie_goal INTEGER,
-    daily_protein_goal DECIMAL(6,2),
-    daily_carbs_goal DECIMAL(6,2),
-    daily_fat_goal DECIMAL(6,2),
+    daily_protein_goal REAL,
+    daily_carbs_goal REAL,
+    daily_fat_goal REAL,
     daily_exercise_minutes INTEGER,
-    is_active BOOLEAN DEFAULT true,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    is_active INTEGER DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
@@ -232,11 +224,11 @@ CREATE TABLE user_goals (
 #### Weight Logs
 ```sql
 CREATE TABLE weight_logs (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    weight_kg DECIMAL(5,2) NOT NULL,
-    logged_date DATE NOT NULL,
-    logged_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    weight_kg REAL NOT NULL,
+    logged_date TEXT NOT NULL,
+    logged_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     notes TEXT
 );
 
@@ -250,27 +242,27 @@ CREATE UNIQUE INDEX idx_weight_logs_user_date ON weight_logs(user_id, logged_dat
 #### Recipes
 ```sql
 CREATE TABLE recipes (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id),
-    name VARCHAR(255) NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    name TEXT NOT NULL,
     description TEXT,
     instructions TEXT,
     prep_time_minutes INTEGER,
     cook_time_minutes INTEGER,
     servings INTEGER,
     image_url TEXT,
-    is_public BOOLEAN DEFAULT false,
-    total_calories DECIMAL(8,2),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    is_public INTEGER DEFAULT 0,
+    total_calories REAL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 
 CREATE TABLE recipe_ingredients (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    recipe_id UUID NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
-    food_item_id UUID NOT NULL REFERENCES food_items(id),
-    quantity DECIMAL(10,2) NOT NULL,
-    unit VARCHAR(50) NOT NULL
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    recipe_id INTEGER NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+    food_item_id INTEGER NOT NULL REFERENCES food_items(id),
+    quantity REAL NOT NULL,
+    unit TEXT NOT NULL
 );
 ```
 
