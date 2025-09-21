@@ -10,8 +10,9 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (token) {
-      // TODO: Validate token and get user info
-      setUser({ first_name: 'User' }) // Placeholder - should fetch actual user data
+      // For now, set a placeholder user. In a real app, you'd validate the token
+      // and fetch user data from the API
+      setUser({ first_name: 'User', username: 'user' })
     }
     setLoading(false)
   }, [])

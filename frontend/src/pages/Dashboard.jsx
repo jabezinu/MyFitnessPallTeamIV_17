@@ -16,6 +16,24 @@ export default function Dashboard() {
       setSummary(response.data.data)
     } catch (error) {
       console.error('Error fetching summary:', error)
+      // Set empty summary on error so the UI still renders
+      setSummary({
+        consumed: { calories: 0, protein: 0, carbs: 0, fat: 0 },
+        exercise_calories_burned: 0,
+        net_calories: 0,
+        goals: null,
+        meals: {
+          breakfast: { calories: 0, entries: 0 },
+          lunch: { calories: 0, entries: 0 },
+          dinner: { calories: 0, entries: 0 },
+          snacks: { calories: 0, entries: 0 }
+        },
+        exercises: {
+          total_duration: 0,
+          total_calories: 0,
+          entries: 0
+        }
+      })
     } finally {
       setLoading(false)
     }
@@ -42,7 +60,7 @@ export default function Dashboard() {
           <div className="bg-white p-6 rounded-lg shadow">
             <h3 className="text-lg font-medium text-gray-900">Calories Consumed</h3>
             <p className="text-3xl font-bold text-green-600">{summary.consumed.calories}</p>
-            <p className="text-sm text-gray-500">Goal: {summary.goals.calories}</p>
+            <p className="text-sm text-gray-500">Goal: {summary.goals?.calories || 'Not set'}</p>
           </div>
           <div className="bg-white p-6 rounded-lg shadow">
             <h3 className="text-lg font-medium text-gray-900">Calories Burned</h3>
@@ -55,7 +73,7 @@ export default function Dashboard() {
           <div className="bg-white p-6 rounded-lg shadow">
             <h3 className="text-lg font-medium text-gray-900">Protein</h3>
             <p className="text-3xl font-bold text-orange-600">{summary.consumed.protein}g</p>
-            <p className="text-sm text-gray-500">Goal: {summary.goals.protein}g</p>
+            <p className="text-sm text-gray-500">Goal: {summary.goals?.protein ? `${summary.goals.protein}g` : 'Not set'}</p>
           </div>
         </div>
       )}

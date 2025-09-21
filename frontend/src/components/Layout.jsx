@@ -3,12 +3,24 @@ import { useContext } from 'react'
 import { AuthContext } from '../contexts/AuthContext'
 
 export default function Layout() {
-  const { user, logout } = useContext(AuthContext)
+  const { user, logout, loading } = useContext(AuthContext)
   const navigate = useNavigate()
 
   const handleLogout = () => {
     logout()
     navigate('/login')
+  }
+
+  // Show loading while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
   }
 
   if (!user) {
@@ -47,7 +59,7 @@ export default function Layout() {
               </Link>
             </nav>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-700">Welcome, {user.first_name}</span>
+              <span className="text-sm text-gray-700">Welcome, {user?.first_name || user?.username || 'User'}</span>
               <button
                 onClick={handleLogout}
                 className="bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-700"
