@@ -61,8 +61,13 @@ class FoodDiaryController extends Controller
             ], 400);
         }
 
+        // Calculate calories
+        $foodItem = \App\Models\FoodItem::find($request->food_item_id);
+        $calories = $foodItem->calories_per_serving * $request->quantity;
+
         $entry = FoodDiaryEntry::create(array_merge($request->all(), [
             'user_id' => $request->user()->id,
+            'calories' => $calories,
             'logged_at' => now(),
         ]));
 

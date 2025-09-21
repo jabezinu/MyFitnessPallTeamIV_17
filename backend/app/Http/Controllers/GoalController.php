@@ -24,7 +24,7 @@ class GoalController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'goal_type' => 'required|in:weight_loss,weight_gain,maintain,muscle_gain',
+            'goal_type' => 'required|in:weight_loss,weight_gain,maintain_weight,muscle_gain',
             'target_weight_kg' => 'nullable|numeric|min:30|max:500',
             'target_date' => 'nullable|date|after:today',
             'weekly_goal_kg' => 'nullable|numeric|min:-5|max:5',

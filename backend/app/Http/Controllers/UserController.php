@@ -24,7 +24,7 @@ class UserController extends Controller
             'first_name' => 'nullable|string|max:255',
             'last_name' => 'nullable|string|max:255',
             'height_cm' => 'nullable|integer|min:50|max:300',
-            'activity_level' => 'nullable|in:sedentary,lightly_active,moderately_active,very_active,extremely_active',
+            'activity_level' => 'nullable|in:sedentary,light,moderate,active,extra',
             'timezone' => 'nullable|string',
         ]);
 

@@ -153,7 +153,7 @@ export default function FoodDiary() {
                     <option value="breakfast">Breakfast</option>
                     <option value="lunch">Lunch</option>
                     <option value="dinner">Dinner</option>
-                    <option value="snacks">Snacks</option>
+                    <option value="snack">Snacks</option>
                   </select>
                 </div>
 

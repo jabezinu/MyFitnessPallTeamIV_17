@@ -65,7 +65,19 @@ class ExerciseDiaryController extends Controller
             ], 400);
         }
 
-        $entry = ExerciseDiaryEntry::create(array_merge($request->all(), [
+        // Calculate calories if not provided
+        $data = $request->all();
+        if (!isset($data['calories_burned']) || $data['calories_burned'] === null) {
+            $exercise = \App\Models\Exercise::find($request->exercise_id);
+            if ($exercise && isset($data['duration_minutes'])) {
+                // Rough calculation: calories = MET * weight_kg * hours
+                // Using average weight of 70kg for calculation
+                $hours = $data['duration_minutes'] / 60;
+                $data['calories_burned'] = round($exercise->met_value * 70 * $hours);
+            }
+        }
+
+        $entry = ExerciseDiaryEntry::create(array_merge($data, [
             'user_id' => $request->user()->id,
             'logged_at' => now(),
         ]));
