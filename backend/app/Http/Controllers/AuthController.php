@@ -102,4 +102,47 @@ class AuthController extends Controller
             'message' => 'Logged out successfully'
         ]);
     }
+
+    public function refreshToken(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'refresh_token' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'VALIDATION_ERROR',
+                    'message' => 'Invalid input data',
+                    'details' => $validator->errors()
+                ]
+            ], 400);
+        }
+
+        // In a real implementation, you'd validate the refresh token
+        // For simplicity, we'll just create a new token for the authenticated user
+        $user = $request->user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'INVALID_TOKEN',
+                    'message' => 'Invalid refresh token'
+                ]
+            ], 401);
+        }
+
+        // Delete current token and create new one
+        $request->user()->currentAccessToken()->delete();
+        $token = $user->createToken('API Token')->plainTextToken;
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'token' => $token
+            ],
+            'message' => 'Token refreshed successfully'
+        ]);
+    }
 }

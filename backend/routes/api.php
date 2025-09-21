@@ -20,12 +20,14 @@ Route::get('/user', function (Request $request) {
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
 Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+Route::post('/auth/refresh-token', [AuthController::class, 'refreshToken']);
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
     // User profile
     Route::get('/users/profile', [UserController::class, 'profile']);
     Route::put('/users/profile', [UserController::class, 'updateProfile']);
+    Route::post('/users/profile-image', [UserController::class, 'uploadProfileImage']);
 
     // Food
     Route::get('/foods/search', [FoodController::class, 'search']);
@@ -36,6 +38,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/food-diary', [FoodDiaryController::class, 'store']);
     Route::put('/food-diary/{entry}', [FoodDiaryController::class, 'update']);
     Route::delete('/food-diary/{entry}', [FoodDiaryController::class, 'destroy']);
+    Route::post('/food-diary/quick-add', [FoodDiaryController::class, 'quickAdd']);
 
     // Exercises
     Route::get('/exercises/search', [ExerciseController::class, 'search']);
@@ -46,6 +49,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/exercise-diary', [ExerciseDiaryController::class, 'store']);
     Route::put('/exercise-diary/{entry}', [ExerciseDiaryController::class, 'update']);
     Route::delete('/exercise-diary/{entry}', [ExerciseDiaryController::class, 'destroy']);
+    Route::post('/exercise-diary/cardio', [ExerciseDiaryController::class, 'storeCardio']);
+    Route::post('/exercise-diary/strength', [ExerciseDiaryController::class, 'storeStrength']);
 
     // Goals
     Route::get('/users/goals', [GoalController::class, 'index']);
@@ -58,4 +63,5 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Dashboard
     Route::get('/users/daily-summary', [DashboardController::class, 'dailySummary']);
+    Route::get('/users/progress', [UserController::class, 'progress']);
 });

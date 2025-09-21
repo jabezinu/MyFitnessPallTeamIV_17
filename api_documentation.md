@@ -42,6 +42,13 @@
 }
 ```
 
+#### POST /api/auth/refresh-token
+```json
+{
+  "refresh_token": "refresh_token_here"
+}
+```
+
 #### POST /api/auth/logout
 Logs out the current user by invalidating their access token.
 
@@ -70,6 +77,9 @@ Returns current user's profile information.
   "timezone": "America/New_York"
 }
 ```
+
+#### POST /api/users/profile-image
+Upload profile image (multipart/form-data)
 
 ### Daily Summary API
 
@@ -172,6 +182,18 @@ Update existing food diary entry.
 #### DELETE /api/food-diary/{entry_id}
 Delete food diary entry.
 
+### Quick Add APIs
+
+#### POST /api/food-diary/quick-add
+```json
+{
+  "meal_type": "lunch",
+  "calories": 350,
+  "logged_date": "2024-01-15",
+  "description": "Restaurant meal"
+}
+```
+
 ## Exercise & Activity Tracking
 
 ### Exercise Database APIs
@@ -195,6 +217,28 @@ Return all exercise entries for a date.
   "calories_burned": 300,
   "logged_date": "2024-01-15",
   "notes": "Morning run"
+}
+```
+
+#### POST /api/exercise-diary/cardio
+```json
+{
+  "exercise_id": 1,
+  "duration_minutes": 45,
+  "distance": 5.2,
+  "distance_unit": "km",
+  "logged_date": "2024-01-15"
+}
+```
+
+#### POST /api/exercise-diary/strength
+```json
+{
+  "exercise_id": 1,
+  "sets": 3,
+  "reps": 12,
+  "weight_used": 50,
+  "logged_date": "2024-01-15"
 }
 ```
 
@@ -237,6 +281,30 @@ Return weight logs for specified period.
   "weight_kg": 72.5,
   "logged_date": "2024-01-15",
   "notes": "Morning weight"
+}
+```
+
+### Progress Reports
+
+#### GET /api/users/progress?period=weekly&weeks=12
+```json
+{
+  "period": "weekly",
+  "data": [
+    {
+      "week_start": "2024-01-01",
+      "avg_calories_consumed": 1850,
+      "avg_calories_goal": 1800,
+      "avg_weight": 73.2,
+      "total_exercise_minutes": 180,
+      "weight_change": -0.3
+    }
+  ],
+  "summary": {
+    "total_weight_lost": 2.1,
+    "avg_weekly_loss": 0.35,
+    "goal_adherence_rate": 0.85
+  }
 }
 ```
 

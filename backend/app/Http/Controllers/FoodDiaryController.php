@@ -131,4 +131,40 @@ class FoodDiaryController extends Controller
             'message' => 'Food diary entry deleted successfully'
         ]);
     }
+
+    public function quickAdd(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'meal_type' => 'required|in:breakfast,lunch,dinner,snack',
+            'calories' => 'required|numeric|min:0',
+            'logged_date' => 'required|date',
+            'description' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'VALIDATION_ERROR',
+                    'message' => 'Invalid input data',
+                    'details' => $validator->errors()
+                ]
+            ], 400);
+        }
+
+        $entry = FoodDiaryEntry::create([
+            'user_id' => $request->user()->id,
+            'meal_type' => $request->meal_type,
+            'calories' => $request->calories,
+            'logged_date' => $request->logged_date,
+            'notes' => $request->description,
+            'logged_at' => now(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => $entry,
+            'message' => 'Quick food entry added successfully'
+        ], 201);
+    }
 }

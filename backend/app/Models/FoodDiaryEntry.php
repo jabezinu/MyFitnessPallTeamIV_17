@@ -13,6 +13,7 @@ class FoodDiaryEntry extends Model
         'meal_type',
         'quantity',
         'serving_unit',
+        'calories',
         'logged_date',
         'logged_at',
         'notes',

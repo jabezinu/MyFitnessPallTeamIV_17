@@ -148,4 +148,72 @@ class ExerciseDiaryController extends Controller
             'message' => 'Exercise diary entry deleted successfully'
         ]);
     }
+
+    public function storeCardio(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'exercise_id' => 'required|exists:exercises,id',
+            'duration_minutes' => 'required|integer|min:1',
+            'distance' => 'nullable|numeric|min:0',
+            'distance_unit' => 'nullable|string|max:10',
+            'logged_date' => 'required|date',
+            'notes' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'VALIDATION_ERROR',
+                    'message' => 'Invalid input data',
+                    'details' => $validator->errors()
+                ]
+            ], 400);
+        }
+
+        $entry = ExerciseDiaryEntry::create(array_merge($request->all(), [
+            'user_id' => $request->user()->id,
+            'logged_at' => now(),
+        ]));
+
+        return response()->json([
+            'success' => true,
+            'data' => $entry->load('exercise'),
+            'message' => 'Cardio exercise entry created successfully'
+        ], 201);
+    }
+
+    public function storeStrength(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'exercise_id' => 'required|exists:exercises,id',
+            'sets' => 'required|integer|min:1',
+            'reps' => 'required|integer|min:1',
+            'weight_used' => 'nullable|numeric|min:0',
+            'logged_date' => 'required|date',
+            'notes' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'VALIDATION_ERROR',
+                    'message' => 'Invalid input data',
+                    'details' => $validator->errors()
+                ]
+            ], 400);
+        }
+
+        $entry = ExerciseDiaryEntry::create(array_merge($request->all(), [
+            'user_id' => $request->user()->id,
+            'logged_at' => now(),
+        ]));
+
+        return response()->json([
+            'success' => true,
+            'data' => $entry->load('exercise'),
+            'message' => 'Strength exercise entry created successfully'
+        ], 201);
+    }
 }
