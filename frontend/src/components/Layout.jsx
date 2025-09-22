@@ -21,8 +21,7 @@ export default function Layout() {
         { label: 'Home', path: '/' },
         { label: 'Goals', path: '/goals' },
         { label: 'Check-in', path: '/weight-logs' },
-        { label: 'Profile', path: '/profile' },
-        { label: 'Settings', path: '/profile' } // Using profile for now
+        { label: 'Profile', path: '/profile' }
       ]
     },
     food: {
