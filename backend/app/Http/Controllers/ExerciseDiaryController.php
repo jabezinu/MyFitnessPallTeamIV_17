@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ExerciseDiaryEntry;
+use App\Models\DailyExerciseNote;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -182,7 +183,20 @@ class ExerciseDiaryController extends Controller
             ], 400);
         }
 
-        $entry = ExerciseDiaryEntry::create(array_merge($request->all(), [
+        $data = $request->all();
+
+        // Calculate calories if not provided
+        if (!isset($data['calories_burned']) || $data['calories_burned'] === null) {
+            $exercise = \App\Models\Exercise::find($request->exercise_id);
+            if ($exercise && isset($data['duration_minutes'])) {
+                // Rough calculation: calories = MET * weight_kg * hours
+                // Using average weight of 70kg for calculation
+                $hours = $data['duration_minutes'] / 60;
+                $data['calories_burned'] = round($exercise->met_value * 70 * $hours);
+            }
+        }
+
+        $entry = ExerciseDiaryEntry::create(array_merge($data, [
             'user_id' => $request->user()->id,
             'logged_at' => now(),
         ]));
@@ -216,7 +230,21 @@ class ExerciseDiaryController extends Controller
             ], 400);
         }
 
-        $entry = ExerciseDiaryEntry::create(array_merge($request->all(), [
+        $data = $request->all();
+
+        // Calculate calories if not provided (rough estimate for strength training)
+        if (!isset($data['calories_burned']) || $data['calories_burned'] === null) {
+            $exercise = \App\Models\Exercise::find($request->exercise_id);
+            if ($exercise && isset($data['sets']) && isset($data['reps'])) {
+                // Rough calculation: calories = MET * weight_kg * hours
+                // Estimate time based on sets/reps, using average weight of 70kg
+                $estimatedMinutes = ($data['sets'] * $data['reps']) * 0.5; // rough estimate
+                $hours = $estimatedMinutes / 60;
+                $data['calories_burned'] = round($exercise->met_value * 70 * $hours);
+            }
+        }
+
+        $entry = ExerciseDiaryEntry::create(array_merge($data, [
             'user_id' => $request->user()->id,
             'logged_at' => now(),
         ]));
@@ -226,5 +254,72 @@ class ExerciseDiaryController extends Controller
             'data' => $entry->load('exercise'),
             'message' => 'Strength exercise entry created successfully'
         ], 201);
+    }
+
+    public function getDailyNotes(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'date' => 'required|date',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'VALIDATION_ERROR',
+                    'message' => 'Invalid input data',
+                    'details' => $validator->errors()
+                ]
+            ], 400);
+        }
+
+        $note = DailyExerciseNote::where('user_id', $request->user()->id)
+            ->where('date', $request->date)
+            ->first();
+
+        return response()->json([
+            'success' => true,
+            'data' => $note ? $note->notes : '',
+            'message' => 'Daily exercise notes retrieved successfully'
+        ]);
+    }
+
+    public function saveDailyNotes(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'date' => 'required|date',
+            'notes' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'VALIDATION_ERROR',
+                    'message' => 'Invalid input data',
+                    'details' => $validator->errors()
+                ]
+            ], 400);
+        }
+
+        $note = DailyExerciseNote::where('user_id', $request->user()->id)
+            ->whereDate('date', $request->date)
+            ->first();
+
+        if ($note) {
+            $note->update(['notes' => $request->notes]);
+        } else {
+            $note = DailyExerciseNote::create([
+                'user_id' => $request->user()->id,
+                'date' => $request->date,
+                'notes' => $request->notes,
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $note,
+            'message' => 'Daily exercise notes saved successfully'
+        ]);
     }
 }

@@ -37,8 +37,7 @@ export default function Layout() {
       items: [
         { label: 'Exercise Diary', path: '/exercise-diary' },
         { label: 'Database', path: '/exercise-database' },
-        { label: 'My Exercise', path: '/my-exercise' },
-        { label: 'Settings', path: '/exercise-settings' }
+        { label: 'My Exercise', path: '/my-exercise' }
       ]
     },
     reports: {

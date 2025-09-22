@@ -9,6 +9,8 @@ import WeightLogs from './pages/WeightLogs'
 import Profile from './pages/Profile'
 import FoodDatabase from './pages/FoodDatabase'
 import MyFoods from './pages/MyFoods'
+import ExerciseDatabase from './pages/ExerciseDatabase'
+import MyExercises from './pages/MyExercises'
 import Placeholder from './pages/Placeholder'
 import Layout from './components/Layout'
 
@@ -30,9 +32,8 @@ export default function App() {
         <Route path="my-foods" element={<MyFoods />} />
 
         {/* Exercise section routes */}
-        <Route path="exercise-database" element={<Placeholder title="Exercise Database" />} />
-        <Route path="my-exercise" element={<Placeholder title="My Exercise" />} />
-        <Route path="exercise-settings" element={<Placeholder title="Exercise Settings" />} />
+        <Route path="exercise-database" element={<ExerciseDatabase />} />
+        <Route path="my-exercise" element={<MyExercises />} />
 
         {/* Reports section routes */}
         <Route path="reports/chart" element={<Placeholder title="Reports Chart" />} />

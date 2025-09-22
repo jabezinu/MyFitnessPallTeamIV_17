@@ -68,8 +68,14 @@ export const foodAPI = {
 
 
 export const exerciseAPI = {
-  searchExercises: (query, category) => 
-    axios.get('/api/exercises/search', { params: { q: query, category } }),
+  searchExercises: (query, category, limit = 20, offset = 0) => {
+    const params = { q: query, limit, offset }
+    if (category) params.category = category
+    return axios.get('/api/exercises/search', { params })
+  },
+  searchMyExercises: (query, limit = 20, offset = 0) =>
+    axios.get('/api/exercises/my-exercises', { params: { q: query, limit, offset } }),
+  createExercise: (exercise) => axios.post('/api/exercises', exercise),
   getCategories: () => axios.get('/api/exercises/categories'),
   getExerciseDiary: (date) => axios.get(`/api/exercise-diary?date=${date}`),
   addExerciseEntry: (entry) => axios.post('/api/exercise-diary', entry),
@@ -77,6 +83,8 @@ export const exerciseAPI = {
   addStrengthEntry: (entry) => axios.post('/api/exercise-diary/strength', entry),
   updateExerciseEntry: (entryId, entry) => axios.put(`/api/exercise-diary/${entryId}`, entry),
   deleteExerciseEntry: (entryId) => axios.delete(`/api/exercise-diary/${entryId}`),
+  getDailyNotes: (date) => axios.get('/api/exercise-diary/daily-notes', { params: { date } }),
+  saveDailyNotes: (date, notes) => axios.post('/api/exercise-diary/daily-notes', { date, notes }),
 }
 
 export default axios

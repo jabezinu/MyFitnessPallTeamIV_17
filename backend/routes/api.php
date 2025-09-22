@@ -48,6 +48,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Exercises
     Route::get('/exercises/search', [ExerciseController::class, 'search']);
     Route::get('/exercises/categories', [ExerciseController::class, 'categories']);
+    Route::get('/exercises/my-exercises', [ExerciseController::class, 'myExercises']);
+    Route::post('/exercises', [ExerciseController::class, 'store']);
 
     // Exercise diary
     Route::get('/exercise-diary', [ExerciseDiaryController::class, 'index']);
@@ -56,6 +58,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/exercise-diary/{entry}', [ExerciseDiaryController::class, 'destroy']);
     Route::post('/exercise-diary/cardio', [ExerciseDiaryController::class, 'storeCardio']);
     Route::post('/exercise-diary/strength', [ExerciseDiaryController::class, 'storeStrength']);
+    Route::get('/exercise-diary/daily-notes', [ExerciseDiaryController::class, 'getDailyNotes']);
+    Route::post('/exercise-diary/daily-notes', [ExerciseDiaryController::class, 'saveDailyNotes']);
 
     // Goals
     Route::get('/users/goals', [GoalController::class, 'index']);
