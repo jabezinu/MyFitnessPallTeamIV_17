@@ -31,10 +31,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Food
     Route::get('/foods/search', [FoodController::class, 'search']);
-    Route::post('/foods', [FoodController::class, 'store']);
-
-    // Food
-    Route::get('/foods/search', [FoodController::class, 'search']);
+    Route::get('/foods/my-foods', [FoodController::class, 'myFoods']);
     Route::post('/foods', [FoodController::class, 'store']);
 
     // Food diary

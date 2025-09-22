@@ -53,6 +53,8 @@ export const userAPI = {
 export const foodAPI = {
   searchFoods: (query, limit = 20, offset = 0) =>
     axios.get('/api/foods/search', { params: { q: query, limit, offset } }),
+  searchMyFoods: (query, limit = 20, offset = 0) =>
+    axios.get('/api/foods/my-foods', { params: { q: query, limit, offset } }),
   createFood: (food) => axios.post('/api/foods', food),
   getFoodDiary: (date) => axios.get(`/api/food-diary?date=${date}`),
   addFoodEntry: (entry) => axios.post('/api/food-diary', entry),
