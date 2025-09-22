@@ -57,11 +57,21 @@ class DashboardController extends Controller
         ];
 
         foreach ($foodEntries as $entry) {
-            $quantity = $entry->quantity;
-            $calories = ($entry->foodItem->calories_per_serving * $quantity);
-            $protein = ($entry->foodItem->protein_g ?? 0) * $quantity;
-            $carbs = ($entry->foodItem->carbs_g ?? 0) * $quantity;
-            $fat = ($entry->foodItem->fat_g ?? 0) * $quantity;
+            $calories = $entry->calories;
+
+            // For entries with food items, calculate macronutrients
+            if ($entry->foodItem) {
+                $quantity = $entry->quantity;
+                $multiplier = $quantity / $entry->foodItem->serving_size;
+                $protein = ($entry->foodItem->protein_g ?? 0) * $multiplier;
+                $carbs = ($entry->foodItem->carbs_g ?? 0) * $multiplier;
+                $fat = ($entry->foodItem->fat_g ?? 0) * $multiplier;
+            } else {
+                // For quick add entries, macronutrients are not tracked
+                $protein = 0;
+                $carbs = 0;
+                $fat = 0;
+            }
 
             $consumed['calories'] += $calories;
             $consumed['protein'] += $protein;

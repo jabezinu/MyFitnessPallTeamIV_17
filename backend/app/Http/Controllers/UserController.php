@@ -11,17 +11,9 @@ class UserController extends Controller
     {
         $user = $request->user();
 
-        // Get the most recent weight log
-        $latestWeightLog = $user->weightLogs()->orderBy('logged_at', 'desc')->first();
-        $currentWeight = $latestWeightLog ? $latestWeightLog->weight_kg : null;
-
-        // Add current weight to user data
-        $userData = $user->toArray();
-        $userData['current_weight_kg'] = $currentWeight;
-
         return response()->json([
             'success' => true,
-            'data' => $userData,
+            'data' => $user,
             'message' => 'Profile retrieved successfully'
         ]);
     }
@@ -36,7 +28,9 @@ class UserController extends Controller
             'date_of_birth' => 'nullable|date|before:today',
             'gender' => 'nullable|in:male,female,other',
             'height_cm' => 'nullable|integer|min:50|max:300',
-            'activity_level' => 'nullable|in:sedentary,light,moderate,active,extra',
+            'current_weight_kg' => 'nullable|numeric|min:20|max:500',
+            'goal_weight_kg' => 'nullable|numeric|min:20|max:500',
+            'activity_level' => 'nullable|in:sedentary,lightly_active,moderately_active,very_active,extra_active',
             'timezone' => 'nullable|string',
             'about_me' => 'nullable|string|max:1000',
             'fitness_motivation' => 'nullable|string|max:1000',
@@ -59,6 +53,8 @@ class UserController extends Controller
             'date_of_birth',
             'gender',
             'height_cm',
+            'current_weight_kg',
+            'goal_weight_kg',
             'activity_level',
             'timezone',
             'about_me',

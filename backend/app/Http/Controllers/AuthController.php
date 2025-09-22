@@ -18,6 +18,12 @@ class AuthController extends Controller
             'username' => 'required|unique:users',
             'first_name' => 'nullable|string',
             'last_name' => 'nullable|string',
+            'date_of_birth' => 'nullable|date',
+            'gender' => 'nullable|in:male,female,other',
+            'height_cm' => 'nullable|integer|min:50|max:300',
+            'current_weight_kg' => 'nullable|numeric|min:20|max:500',
+            'goal_weight_kg' => 'nullable|numeric|min:20|max:500',
+            'activity_level' => 'nullable|in:sedentary,lightly_active,moderately_active,very_active,extra_active',
         ]);
 
         if ($validator->fails()) {
@@ -37,6 +43,12 @@ class AuthController extends Controller
             'username' => $request->username,
             'first_name' => $request->first_name,
             'last_name' => $request->last_name,
+            'date_of_birth' => $request->date_of_birth,
+            'gender' => $request->gender,
+            'height_cm' => $request->height_cm,
+            'current_weight_kg' => $request->current_weight_kg,
+            'goal_weight_kg' => $request->goal_weight_kg,
+            'activity_level' => $request->activity_level,
             'email_verified' => false, // In real app, send verification email
         ]);
 

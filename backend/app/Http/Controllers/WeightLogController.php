@@ -30,7 +30,7 @@ class WeightLogController extends Controller
 
         $logs = WeightLog::where('user_id', $request->user()->id)
             ->where('logged_date', '>=', $startDate->toDateString())
-            ->orderBy('logged_at', 'desc')
+            ->orderBy('logged_date', 'desc')
             ->get();
 
         return response()->json([

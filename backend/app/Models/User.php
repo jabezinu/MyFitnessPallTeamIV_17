@@ -27,6 +27,8 @@ class User extends Authenticatable
         'date_of_birth',
         'gender',
         'height_cm',
+        'current_weight_kg',
+        'goal_weight_kg',
         'activity_level',
         'timezone',
         'profile_image_url',

@@ -1,11 +1,93 @@
 import { useState, useEffect } from 'react'
 import { userAPI } from '../services/api'
 
+const calculateNutritionGoals = (user) => {
+  if (!user.date_of_birth || !user.gender || !user.height_cm || !user.current_weight_kg || !user.activity_level) {
+    return null
+  }
+
+  const birthDate = new Date(user.date_of_birth)
+  const today = new Date()
+  const age = today.getFullYear() - birthDate.getFullYear() - (today.getMonth() < birthDate.getMonth() || (today.getMonth() === birthDate.getMonth() && today.getDate() < birthDate.getDate()) ? 1 : 0)
+
+  const weight = user.current_weight_kg
+  const height = user.height_cm
+
+  // BMR calculation using Mifflin-St Jeor formula
+  let bmr
+  if (user.gender === 'male') {
+    bmr = 10 * weight + 6.25 * height - 5 * age + 5
+  } else {
+    bmr = 10 * weight + 6.25 * height - 5 * age - 161
+  }
+
+  // Activity multipliers
+  const activityMultipliers = {
+    sedentary: 1.2,
+    lightly_active: 1.375,
+    moderately_active: 1.55,
+    very_active: 1.725,
+    extra_active: 1.9
+  }
+
+  const tdee = bmr * activityMultipliers[user.activity_level]
+
+  // Determine goal type based on current vs goal weight
+  let goalType = 'maintain_weight'
+  let dailyCalories = Math.round(tdee)
+
+  if (user.goal_weight_kg) {
+    if (user.goal_weight_kg < user.current_weight_kg) {
+      goalType = 'weight_loss'
+      dailyCalories = Math.round(tdee - 500) // 500 calorie deficit for 1kg/week loss
+    } else if (user.goal_weight_kg > user.current_weight_kg) {
+      goalType = 'weight_gain'
+      dailyCalories = Math.round(tdee + 500) // 500 calorie surplus for 1kg/week gain
+    }
+  }
+
+  // Macronutrient calculations
+  const proteinPerKg = user.gender === 'male' ? 1.6 : 1.4 // g/kg protein
+  const dailyProtein = Math.round(weight * proteinPerKg)
+  const proteinCalories = dailyProtein * 4
+
+  // Fat: 20-30% of calories
+  const fatPercentage = 0.25
+  const dailyFat = Math.round((dailyCalories * fatPercentage) / 9)
+  const fatCalories = dailyFat * 9
+
+  // Carbs: remaining calories
+  const carbCalories = dailyCalories - proteinCalories - fatCalories
+  const dailyCarbs = Math.round(carbCalories / 4)
+
+  // Exercise minutes based on activity level
+  const exerciseMinutes = {
+    sedentary: 30,
+    lightly_active: 45,
+    moderately_active: 60,
+    very_active: 75,
+    extra_active: 90
+  }
+
+  return {
+    goal_type: goalType,
+    target_weight_kg: user.goal_weight_kg || user.current_weight_kg,
+    weekly_goal_kg: 0.5,
+    daily_calorie_goal: dailyCalories,
+    daily_protein_goal: dailyProtein,
+    daily_carbs_goal: dailyCarbs,
+    daily_fat_goal: dailyFat,
+    daily_exercise_minutes: exerciseMinutes[user.activity_level],
+    target_date: user.goal_weight_kg ? new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : '' // 90 days default
+  }
+}
+
 export default function Goals() {
   const [goals, setGoals] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('overview')
   const [showForm, setShowForm] = useState(false)
+  const [userProfile, setUserProfile] = useState(null)
   const [formData, setFormData] = useState({
     goal_type: 'weight_loss',
     target_weight_kg: '',
@@ -19,7 +101,28 @@ export default function Goals() {
   })
 
   useEffect(() => {
-    fetchGoals()
+    const fetchData = async () => {
+      try {
+        const [goalsResponse, profileResponse] = await Promise.all([
+          userAPI.getGoals(),
+          userAPI.getProfile()
+        ])
+        setGoals(goalsResponse.data.data || [])
+        setUserProfile(profileResponse.data.data)
+
+        // Pre-fill form with calculated values
+        const calculatedGoals = calculateNutritionGoals(profileResponse.data.data)
+        if (calculatedGoals) {
+          setFormData(calculatedGoals)
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
   }, [])
 
   const fetchGoals = async () => {
@@ -52,6 +155,7 @@ export default function Goals() {
       console.error('Error creating goal:', error)
     }
   }
+
 
   const resetForm = () => {
     setFormData({
@@ -248,25 +352,40 @@ export default function Goals() {
                 <p className="text-gray-600 mb-4">
                   Track essential vitamins and minerals to ensure optimal health and performance.
                 </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {[
-                    { name: 'Vitamin A', rda: '900 mcg', icon: '🥕' },
-                    { name: 'Vitamin C', rda: '90 mg', icon: '🍊' },
-                    { name: 'Vitamin D', rda: '15 mcg', icon: '☀️' },
-                    { name: 'Calcium', rda: '1000 mg', icon: '🥛' },
-                    { name: 'Iron', rda: '18 mg', icon: '🥩' },
-                    { name: 'Zinc', rda: '11 mg', icon: '🌰' }
-                  ].map((nutrient) => (
-                    <div key={nutrient.name} className="bg-white p-4 rounded-lg">
-                      <div className="flex items-center mb-2">
-                        <span className="text-xl mr-2">{nutrient.icon}</span>
-                        <h4 className="font-medium">{nutrient.name}</h4>
-                      </div>
-                      <div className="text-sm text-gray-600">RDA: {nutrient.rda}</div>
-                      <div className="text-xs text-gray-500 mt-1">Coming soon</div>
-                    </div>
-                  ))}
-                </div>
+                {userProfile ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {(() => {
+                      const age = userProfile.date_of_birth ? new Date().getFullYear() - new Date(userProfile.date_of_birth).getFullYear() : 30
+                      const isMale = userProfile.gender === 'male'
+
+                      const micronutrients = [
+                        { name: 'Vitamin A', rda: age >= 19 ? (isMale ? '900 mcg' : '700 mcg') : '600-900 mcg', icon: '🥕' },
+                        { name: 'Vitamin C', rda: age >= 19 ? '90 mg' : '45-75 mg', icon: '🍊' },
+                        { name: 'Vitamin D', rda: age >= 19 ? '15 mcg' : '15 mcg', icon: '☀️' },
+                        { name: 'Calcium', rda: age >= 19 ? '1000 mg' : '1000-1200 mg', icon: '🥛' },
+                        { name: 'Iron', rda: isMale ? '8 mg' : '18 mg', icon: '🥩' },
+                        { name: 'Zinc', rda: isMale ? '11 mg' : '8 mg', icon: '🌰' },
+                        { name: 'Vitamin B12', rda: '2.4 mcg', icon: '🧄' },
+                        { name: 'Folate', rda: '400 mcg', icon: '🥬' }
+                      ]
+
+                      return micronutrients.map((nutrient) => (
+                        <div key={nutrient.name} className="bg-white p-4 rounded-lg">
+                          <div className="flex items-center mb-2">
+                            <span className="text-xl mr-2">{nutrient.icon}</span>
+                            <h4 className="font-medium">{nutrient.name}</h4>
+                          </div>
+                          <div className="text-sm text-gray-600">RDA: {nutrient.rda}</div>
+                          <div className="text-xs text-gray-500 mt-1">Track in your meals</div>
+                        </div>
+                      ))
+                    })()}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    Complete your profile to see personalized micronutrient recommendations
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -360,6 +479,14 @@ export default function Goals() {
           <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
             <div className="mt-3">
               <h3 className="text-lg font-semibold mb-4">Set New Fitness Goal</h3>
+              {userProfile && (
+                <div className="bg-blue-50 p-3 rounded-md mb-4">
+                  <p className="text-sm text-blue-800">
+                    💡 Values are pre-calculated based on your profile (age: {userProfile.date_of_birth ? new Date().getFullYear() - new Date(userProfile.date_of_birth).getFullYear() : 'N/A'}, gender: {userProfile.gender || 'N/A'}, height: {userProfile.height_cm || 'N/A'}cm, weight: {userProfile.current_weight_kg || 'N/A'}kg, activity: {userProfile.activity_level || 'N/A'}).
+                    You can adjust them as needed.
+                  </p>
+                </div>
+              )}
               <form onSubmit={createGoal} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>

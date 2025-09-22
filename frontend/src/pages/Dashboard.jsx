@@ -4,7 +4,10 @@ import { userAPI } from '../services/api'
 export default function Dashboard() {
   const [summary, setSummary] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0])
+  const [date, setDate] = useState(() => {
+    const today = new Date()
+    return today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0')
+  })
 
   useEffect(() => {
     fetchSummary()

@@ -31,12 +31,11 @@ export default function FoodDiary() {
 
   useEffect(() => {
     fetchEntries()
-  }, [])
+  }, [date])
 
   const fetchEntries = async () => {
     try {
-      const today = new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(new Date().getDate()).padStart(2, '0')
-      const response = await foodAPI.getFoodDiary(today)
+      const response = await foodAPI.getFoodDiary(date)
       console.log('API Response:', response.data)
       const entriesData = response.data.data.entries || []
       console.log('Entries:', entriesData)
@@ -99,13 +98,12 @@ export default function FoodDiary() {
     }
 
     try {
-      const today = new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(new Date().getDate()).padStart(2, '0')
       const entry = {
         food_item_id: selectedFood.id,
         meal_type: mealType,
         quantity: quantity,
         serving_unit: selectedFood.serving_unit,
-        logged_date: today
+        logged_date: date
       }
       console.log('Adding entry:', entry)
       const response = await foodAPI.addFoodEntry(entry)
@@ -134,11 +132,10 @@ export default function FoodDiary() {
     if (!quickCalories || !currentMealType) return
 
     try {
-      const today = new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(new Date().getDate()).padStart(2, '0')
       await foodAPI.quickAdd({
         meal_type: currentMealType,
         calories: parseFloat(quickCalories),
-        logged_date: today,
+        logged_date: date,
         description: quickDescription
       })
       setShowQuickAddForm(false)
