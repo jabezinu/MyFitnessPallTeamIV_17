@@ -60,6 +60,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Weight logs
     Route::get('/users/weight-logs', [WeightLogController::class, 'index']);
     Route::post('/users/weight-logs', [WeightLogController::class, 'store']);
+    Route::put('/users/weight-logs/{id}', [WeightLogController::class, 'update']);
 
     // Dashboard
     Route::get('/users/daily-summary', [DashboardController::class, 'dailySummary']);

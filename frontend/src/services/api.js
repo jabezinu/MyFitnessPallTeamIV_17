@@ -46,6 +46,7 @@ export const userAPI = {
   updateGoal: (goalId, goal) => axios.put(`/api/users/goals/${goalId}`, goal),
   getWeightLogs: (period) => axios.get(`/api/users/weight-logs?period=${period}`),
   addWeightLog: (log) => axios.post('/api/users/weight-logs', log),
+  updateWeightLog: (id, log) => axios.put(`/api/users/weight-logs/${id}`, log),
   getProgress: (params) => axios.get('/api/users/progress', { params }),
 }
 

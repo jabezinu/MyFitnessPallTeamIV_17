@@ -30,7 +30,7 @@ class WeightLogController extends Controller
 
         $logs = WeightLog::where('user_id', $request->user()->id)
             ->where('logged_date', '>=', $startDate->toDateString())
-            ->orderBy('logged_date', 'desc')
+            ->orderBy('logged_at', 'desc')
             ->get();
 
         return response()->json([
@@ -44,6 +44,9 @@ class WeightLogController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'weight_kg' => 'required|numeric|min:30|max:500',
+            'neck_cm' => 'nullable|numeric|min:20|max:100',
+            'waist_cm' => 'nullable|numeric|min:40|max:200',
+            'hips_cm' => 'nullable|numeric|min:50|max:200',
             'logged_date' => 'required|date',
             'notes' => 'nullable|string',
         ]);
@@ -84,5 +87,55 @@ class WeightLogController extends Controller
             'data' => $log,
             'message' => 'Weight log created successfully'
         ], 201);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $log = WeightLog::where('user_id', $request->user()->id)
+            ->findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'weight_kg' => 'required|numeric|min:30|max:500',
+            'neck_cm' => 'nullable|numeric|min:20|max:100',
+            'waist_cm' => 'nullable|numeric|min:40|max:200',
+            'hips_cm' => 'nullable|numeric|min:50|max:200',
+            'logged_date' => 'required|date',
+            'notes' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'VALIDATION_ERROR',
+                    'message' => 'Invalid input data',
+                    'details' => $validator->errors()
+                ]
+            ], 400);
+        }
+
+        // Check if another log exists for this date (excluding current log)
+        $existing = WeightLog::where('user_id', $request->user()->id)
+            ->where('logged_date', $request->logged_date)
+            ->where('id', '!=', $id)
+            ->first();
+
+        if ($existing) {
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'DUPLICATE_ENTRY',
+                    'message' => 'Weight log already exists for this date'
+                ]
+            ], 409);
+        }
+
+        $log->update($request->all());
+
+        return response()->json([
+            'success' => true,
+            'data' => $log,
+            'message' => 'Weight log updated successfully'
+        ]);
     }
 }
