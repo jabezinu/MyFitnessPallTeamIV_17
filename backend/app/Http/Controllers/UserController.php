@@ -9,9 +9,19 @@ class UserController extends Controller
 {
     public function profile(Request $request)
     {
+        $user = $request->user();
+
+        // Get the most recent weight log
+        $latestWeightLog = $user->weightLogs()->orderBy('logged_at', 'desc')->first();
+        $currentWeight = $latestWeightLog ? $latestWeightLog->weight_kg : null;
+
+        // Add current weight to user data
+        $userData = $user->toArray();
+        $userData['current_weight_kg'] = $currentWeight;
+
         return response()->json([
             'success' => true,
-            'data' => $request->user(),
+            'data' => $userData,
             'message' => 'Profile retrieved successfully'
         ]);
     }
@@ -23,9 +33,13 @@ class UserController extends Controller
         $validator = Validator::make($request->all(), [
             'first_name' => 'nullable|string|max:255',
             'last_name' => 'nullable|string|max:255',
+            'date_of_birth' => 'nullable|date|before:today',
+            'gender' => 'nullable|in:male,female,other',
             'height_cm' => 'nullable|integer|min:50|max:300',
             'activity_level' => 'nullable|in:sedentary,light,moderate,active,extra',
             'timezone' => 'nullable|string',
+            'about_me' => 'nullable|string|max:1000',
+            'fitness_motivation' => 'nullable|string|max:1000',
         ]);
 
         if ($validator->fails()) {
@@ -42,9 +56,13 @@ class UserController extends Controller
         $user->update($request->only([
             'first_name',
             'last_name',
+            'date_of_birth',
+            'gender',
             'height_cm',
             'activity_level',
-            'timezone'
+            'timezone',
+            'about_me',
+            'fitness_motivation'
         ]));
 
         return response()->json([

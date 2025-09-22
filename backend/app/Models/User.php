@@ -30,6 +30,10 @@ class User extends Authenticatable
         'activity_level',
         'timezone',
         'profile_image_url',
+        'about_me',
+        'fitness_motivation',
+        'friends',
+        'inspirations',
         'is_premium',
         'email_verified',
         'privacy_settings',
@@ -59,6 +63,8 @@ class User extends Authenticatable
             'is_premium' => 'boolean',
             'email_verified' => 'boolean',
             'privacy_settings' => 'array',
+            'friends' => 'array',
+            'inspirations' => 'array',
         ];
     }
 
