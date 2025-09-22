@@ -33,6 +33,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/foods/search', [FoodController::class, 'search']);
     Route::post('/foods', [FoodController::class, 'store']);
 
+    // Food
+    Route::get('/foods/search', [FoodController::class, 'search']);
+    Route::post('/foods', [FoodController::class, 'store']);
+
     // Food diary
     Route::get('/food-diary', [FoodDiaryController::class, 'index']);
     Route::post('/food-diary', [FoodDiaryController::class, 'store']);
@@ -42,6 +46,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/food-diary/copy-yesterday', [FoodDiaryController::class, 'copyYesterday']);
     Route::post('/food-diary/copy-from-date', [FoodDiaryController::class, 'copyFromDate']);
     Route::post('/food-diary/copy-to-date', [FoodDiaryController::class, 'copyToDate']);
+
 
     // Exercises
     Route::get('/exercises/search', [ExerciseController::class, 'search']);

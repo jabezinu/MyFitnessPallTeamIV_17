@@ -64,6 +64,7 @@ export const foodAPI = {
   copyToDate: (sourceDate, targetDate) => axios.post('/api/food-diary/copy-to-date', { source_date: sourceDate, target_date: targetDate }),
 }
 
+
 export const exerciseAPI = {
   searchExercises: (query, category) => 
     axios.get('/api/exercises/search', { params: { q: query, category } }),

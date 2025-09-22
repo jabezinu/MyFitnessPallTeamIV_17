@@ -29,10 +29,7 @@ export default function Layout() {
       items: [
         { label: 'Food Diary', path: '/food-diary' },
         { label: 'Database', path: '/food-database' },
-        { label: 'My Foods', path: '/my-foods' },
-        { label: 'My Meals', path: '/my-meals' },
-        { label: 'Recipes', path: '/recipes' },
-        { label: 'Settings', path: '/food-settings' }
+        { label: 'My Foods', path: '/my-foods' }
       ]
     },
     exercise: {
