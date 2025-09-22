@@ -39,7 +39,7 @@ class DashboardController extends Controller
         // Calculate consumed nutrients
         $foodEntries = FoodDiaryEntry::with('foodItem')
             ->where('user_id', $userId)
-            ->where('logged_date', $date)
+            ->whereDate('logged_date', $date)
             ->get();
 
         $consumed = [
@@ -74,7 +74,7 @@ class DashboardController extends Controller
 
         // Calculate exercise calories
         $exerciseEntries = ExerciseDiaryEntry::where('user_id', $userId)
-            ->where('logged_date', $date)
+            ->whereDate('logged_date', $date)
             ->get();
 
         $exerciseCalories = $exerciseEntries->sum('calories_burned');

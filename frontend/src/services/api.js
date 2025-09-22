@@ -61,7 +61,7 @@ export const foodAPI = {
   updateFoodEntry: (entryId, entry) => axios.put(`/api/food-diary/${entryId}`, entry),
   deleteFoodEntry: (entryId) => axios.delete(`/api/food-diary/${entryId}`),
   quickAdd: (data) => axios.post('/api/food-diary/quick-add', data),
-  copyYesterday: (targetDate) => axios.post('/api/food-diary/copy-yesterday', { target_date: targetDate }),
+  copyYesterday: (targetDate, mealType) => axios.post('/api/food-diary/copy-yesterday', { target_date: targetDate, meal_type: mealType }),
   copyFromDate: (sourceDate, targetDate) => axios.post('/api/food-diary/copy-from-date', { source_date: sourceDate, target_date: targetDate }),
   copyToDate: (sourceDate, targetDate) => axios.post('/api/food-diary/copy-to-date', { source_date: sourceDate, target_date: targetDate }),
 }

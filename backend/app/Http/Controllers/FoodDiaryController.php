@@ -29,7 +29,7 @@ class FoodDiaryController extends Controller
 
         $entries = FoodDiaryEntry::with('foodItem')
             ->where('user_id', $request->user()->id)
-            ->where('logged_date', $date)
+            ->whereDate('logged_date', $date)
             ->get();
 
         $userGoal = \App\Models\UserGoal::where('user_id', $request->user()->id)
@@ -37,12 +37,18 @@ class FoodDiaryController extends Controller
             ->first();
 
         $dailyCalorieGoal = $userGoal ? $userGoal->daily_calorie_goal : 2000; // Default to 2000 if no goal set
+        $dailyProteinGoal = $userGoal ? $userGoal->daily_protein_goal : 150; // Default to 150g if no goal set
+        $dailyCarbsGoal = $userGoal ? $userGoal->daily_carbs_goal : 250; // Default to 250g if no goal set
+        $dailyFatGoal = $userGoal ? $userGoal->daily_fat_goal : 70; // Default to 70g if no goal set
 
         return response()->json([
             'success' => true,
             'data' => [
                 'entries' => $entries,
                 'daily_calorie_goal' => $dailyCalorieGoal,
+                'daily_protein_goal' => $dailyProteinGoal,
+                'daily_carbs_goal' => $dailyCarbsGoal,
+                'daily_fat_goal' => $dailyFatGoal,
                 'total_calories' => $entries->sum('calories')
             ],
             'message' => 'Food diary entries retrieved successfully'
@@ -51,6 +57,8 @@ class FoodDiaryController extends Controller
 
     public function store(Request $request)
     {
+        \Log::info('FoodDiary store request', ['data' => $request->all()]);
+
         $validator = Validator::make($request->all(), [
             'food_item_id' => 'required|exists:food_items,id',
             'meal_type' => 'required|in:breakfast,lunch,dinner,snack',
@@ -61,6 +69,7 @@ class FoodDiaryController extends Controller
         ]);
 
         if ($validator->fails()) {
+            \Log::error('Validation failed', ['errors' => $validator->errors()]);
             return response()->json([
                 'success' => false,
                 'error' => [
@@ -73,19 +82,44 @@ class FoodDiaryController extends Controller
 
         // Calculate calories
         $foodItem = \App\Models\FoodItem::find($request->food_item_id);
-        $calories = $foodItem->calories_per_serving * $request->quantity;
+        if (!$foodItem) {
+            \Log::error('Food item not found', ['food_item_id' => $request->food_item_id]);
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'NOT_FOUND',
+                    'message' => 'Food item not found'
+                ]
+            ], 404);
+        }
 
-        $entry = FoodDiaryEntry::create(array_merge($request->all(), [
-            'user_id' => $request->user()->id,
-            'calories' => $calories,
-            'logged_at' => now(),
-        ]));
+        $calories = $foodItem->calories_per_serving * ($request->quantity / $foodItem->serving_size);
+        \Log::info('Calculated calories', ['calories' => $calories, 'food_item' => $foodItem->name]);
 
-        return response()->json([
-            'success' => true,
-            'data' => $entry->load('foodItem'),
-            'message' => 'Food diary entry created successfully'
-        ], 201);
+        try {
+            $entry = FoodDiaryEntry::create(array_merge($request->all(), [
+                'user_id' => $request->user()->id,
+                'calories' => $calories,
+                'logged_at' => now(),
+            ]));
+
+            \Log::info('Entry created successfully', ['entry_id' => $entry->id]);
+
+            return response()->json([
+                'success' => true,
+                'data' => $entry->load('foodItem'),
+                'message' => 'Food diary entry created successfully'
+            ], 201);
+        } catch (\Exception $e) {
+            \Log::error('Error creating entry', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'INTERNAL_ERROR',
+                    'message' => 'Failed to create entry'
+                ]
+            ], 500);
+        }
     }
 
     public function update(Request $request, FoodDiaryEntry $entry)
@@ -187,6 +221,7 @@ class FoodDiaryController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'target_date' => 'required|date',
+            'meal_type' => 'nullable|in:breakfast,lunch,dinner,snack',
         ]);
 
         if ($validator->fails()) {
@@ -202,9 +237,14 @@ class FoodDiaryController extends Controller
 
         $yesterday = \Carbon\Carbon::parse($request->target_date)->subDay()->toDateString();
 
-        $yesterdayEntries = FoodDiaryEntry::where('user_id', $request->user()->id)
-            ->where('logged_date', $yesterday)
-            ->get();
+        $query = FoodDiaryEntry::where('user_id', $request->user()->id)
+            ->whereDate('logged_date', $yesterday);
+
+        if ($request->meal_type) {
+            $query->where('meal_type', $request->meal_type);
+        }
+
+        $yesterdayEntries = $query->get();
 
         $copiedEntries = [];
         foreach ($yesterdayEntries as $entry) {
@@ -248,7 +288,7 @@ class FoodDiaryController extends Controller
         }
 
         $sourceEntries = FoodDiaryEntry::where('user_id', $request->user()->id)
-            ->where('logged_date', $request->source_date)
+            ->whereDate('logged_date', $request->source_date)
             ->get();
 
         $copiedEntries = [];
@@ -293,7 +333,7 @@ class FoodDiaryController extends Controller
         }
 
         $sourceEntries = FoodDiaryEntry::where('user_id', $request->user()->id)
-            ->where('logged_date', $request->source_date)
+            ->whereDate('logged_date', $request->source_date)
             ->get();
 
         $copiedEntries = [];

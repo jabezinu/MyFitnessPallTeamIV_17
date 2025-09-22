@@ -6,7 +6,14 @@ export default function FoodDiary() {
   const [loading, setLoading] = useState(true)
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
   const [dailyCalorieGoal, setDailyCalorieGoal] = useState(2000)
+  const [dailyProteinGoal, setDailyProteinGoal] = useState(150)
+  const [dailyCarbsGoal, setDailyCarbsGoal] = useState(250)
+  const [dailyFatGoal, setDailyFatGoal] = useState(70)
   const [totalCalories, setTotalCalories] = useState(0)
+  const [totalProtein, setTotalProtein] = useState(0)
+  const [totalCarbs, setTotalCarbs] = useState(0)
+  const [totalFat, setTotalFat] = useState(0)
+  const [totalFiber, setTotalFiber] = useState(0)
   const [showAddForm, setShowAddForm] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
@@ -24,17 +31,38 @@ export default function FoodDiary() {
 
   useEffect(() => {
     fetchEntries()
-  }, [date])
+  }, [])
 
   const fetchEntries = async () => {
     try {
-      const response = await foodAPI.getFoodDiary(date)
+      const today = new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(new Date().getDate()).padStart(2, '0')
+      const response = await foodAPI.getFoodDiary(today)
       console.log('API Response:', response.data)
       const entriesData = response.data.data.entries || []
       console.log('Entries:', entriesData)
       setEntries(entriesData)
       setDailyCalorieGoal(response.data.data.daily_calorie_goal || 2000)
+      setDailyProteinGoal(response.data.data.daily_protein_goal || 150)
+      setDailyCarbsGoal(response.data.data.daily_carbs_goal || 250)
+      setDailyFatGoal(response.data.data.daily_fat_goal || 70)
       setTotalCalories(response.data.data.total_calories || 0)
+
+      // Calculate macronutrient totals
+      let protein = 0, carbs = 0, fat = 0, fiber = 0
+      entriesData.forEach(entry => {
+        if (entry.food_item) {
+          const foodItem = entry.food_item
+          const multiplier = entry.quantity / foodItem.serving_size
+          protein += (foodItem.protein_g || 0) * multiplier
+          carbs += (foodItem.carbs_g || 0) * multiplier
+          fat += (foodItem.fat_g || 0) * multiplier
+          fiber += (foodItem.fiber_g || 0) * multiplier
+        }
+      })
+      setTotalProtein(protein)
+      setTotalCarbs(carbs)
+      setTotalFat(fat)
+      setTotalFiber(fiber)
     } catch (error) {
       console.error('Error fetching food diary:', error)
     } finally {
@@ -65,15 +93,19 @@ export default function FoodDiary() {
   }
 
   const addFoodEntry = async () => {
-    if (!selectedFood) return
+    if (!selectedFood) {
+      console.error('No food selected')
+      return
+    }
 
     try {
+      const today = new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(new Date().getDate()).padStart(2, '0')
       const entry = {
         food_item_id: selectedFood.id,
         meal_type: mealType,
         quantity: quantity,
         serving_unit: selectedFood.serving_unit,
-        logged_date: date
+        logged_date: today
       }
       console.log('Adding entry:', entry)
       const response = await foodAPI.addFoodEntry(entry)
@@ -85,6 +117,7 @@ export default function FoodDiary() {
       fetchEntries()
     } catch (error) {
       console.error('Error adding food entry:', error)
+      console.error('Error details:', error.response?.data)
     }
   }
 
@@ -101,10 +134,11 @@ export default function FoodDiary() {
     if (!quickCalories || !currentMealType) return
 
     try {
+      const today = new Date().getFullYear() + '-' + String(new Date().getMonth() + 1).padStart(2, '0') + '-' + String(new Date().getDate()).padStart(2, '0')
       await foodAPI.quickAdd({
         meal_type: currentMealType,
         calories: parseFloat(quickCalories),
-        logged_date: date,
+        logged_date: today,
         description: quickDescription
       })
       setShowQuickAddForm(false)
@@ -116,9 +150,9 @@ export default function FoodDiary() {
     }
   }
 
-  const handleCopyYesterday = async () => {
+  const handleCopyYesterday = async (mealType) => {
     try {
-      await foodAPI.copyYesterday(date)
+      await foodAPI.copyYesterday(date, mealType)
       fetchEntries()
     } catch (error) {
       console.error('Error copying from yesterday:', error)
@@ -389,10 +423,10 @@ export default function FoodDiary() {
         </div>
       )}
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {meals.map(meal => (
-          <div key={meal} className="bg-white p-6 rounded-lg shadow">
-            <div className="flex justify-between items-center mb-4">
+          <div key={meal} className="bg-white p-4 rounded-lg shadow">
+            <div className="flex justify-between items-center mb-3">
               <h3 className="text-xl font-semibold capitalize">{meal === 'snack' ? 'Snacks' : meal}</h3>
               <div className="flex space-x-2">
                 <button
@@ -460,39 +494,58 @@ export default function FoodDiary() {
             {mealEntries[meal].length === 0 ? (
               <p className="text-gray-500">No entries for {meal === 'snack' ? 'Snacks' : meal}</p>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-1">
                 {mealEntries[meal].map(entry => {
+                  const isQuickAdd = !entry.food_item
+
+                  if (isQuickAdd) {
+                    return (
+                      <div key={entry.id} className="p-2 bg-gray-50 rounded">
+                        <div className="flex justify-between items-center">
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-sm truncate">{entry.notes || 'Quick Added Calories'}</div>
+                            <div className="text-xs text-gray-600">
+                              {entry.calories} cal
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => deleteEntry(entry.id)}
+                            className="text-red-600 hover:text-red-800 ml-2 text-sm"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  }
+
                   const foodItem = entry.food_item
                   const multiplier = entry.quantity / foodItem.serving_size
                   const protein = (foodItem.protein_g || 0) * multiplier
                   const carbs = (foodItem.carbs_g || 0) * multiplier
                   const fat = (foodItem.fat_g || 0) * multiplier
                   const fiber = (foodItem.fiber_g || 0) * multiplier
-                  const sugar = (foodItem.sugar_g || 0) * multiplier
-                  const sodium = (foodItem.sodium_mg || 0) * multiplier
 
                   return (
-                    <div key={entry.id} className="p-3 bg-gray-50 rounded">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <div className="font-medium">{foodItem.name}</div>
-                          <div className="text-sm text-gray-600">
-                            {entry.quantity} {entry.serving_unit} - {entry.calories} cal
+                    <div key={entry.id} className="p-2 bg-gray-50 rounded">
+                      <div className="flex justify-between items-center">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-sm truncate">{foodItem.name}</div>
+                          <div className="text-xs text-gray-600">
+                            {entry.quantity} {entry.serving_unit} • {entry.calories} cal
                           </div>
-                          <div className="text-xs text-gray-500 mt-1 grid grid-cols-2 gap-1">
-                            <span>Protein: {protein.toFixed(1)}g</span>
-                            <span>Carbs: {carbs.toFixed(1)}g</span>
-                            <span>Fat: {fat.toFixed(1)}g</span>
-                            <span>Fiber: {fiber.toFixed(1)}g</span>
-                            <span>Sugar: {sugar.toFixed(1)}g</span>
-                            <span>Sodium: {sodium.toFixed(0)}mg</span>
+                          <div className="text-xs text-gray-500 mt-1 flex flex-wrap gap-2">
+                            <span>P: {protein.toFixed(1)}g</span>
+                            <span>C: {carbs.toFixed(1)}g</span>
+                            <span>F: {fat.toFixed(1)}g</span>
+                            {fiber > 0 && <span>Fb: {fiber.toFixed(1)}g</span>}
                           </div>
                         </div>
                         <button
                           onClick={() => deleteEntry(entry.id)}
-                          className="text-red-600 hover:text-red-800 ml-2"
+                          className="text-red-600 hover:text-red-800 ml-2 text-sm"
                         >
-                          Delete
+                          ×
                         </button>
                       </div>
                     </div>
@@ -510,31 +563,112 @@ export default function FoodDiary() {
       {/* Daily Summary */}
       <div className="bg-white p-6 rounded-lg shadow">
         <h3 className="text-xl font-semibold mb-4">Daily Summary</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600">{totalCalories}</div>
-            <div className="text-sm text-gray-600">Calories Consumed</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">{dailyCalorieGoal}</div>
-            <div className="text-sm text-gray-600">Daily Goal</div>
-          </div>
-          <div className="text-center">
-            <div className={`text-2xl font-bold ${totalCalories > dailyCalorieGoal ? 'text-red-600' : 'text-green-600'}`}>
-              {Math.max(0, dailyCalorieGoal - totalCalories)}
+
+        {/* Calories Section */}
+        <div className="mb-6">
+          <h4 className="text-lg font-medium mb-3">Calories</h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-blue-600">{totalCalories.toFixed(0)}</div>
+              <div className="text-sm text-gray-600">Calories Consumed</div>
             </div>
-            <div className="text-sm text-gray-600">Remaining</div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-600">{dailyCalorieGoal}</div>
+              <div className="text-sm text-gray-600">Daily Goal</div>
+            </div>
+            <div className="text-center">
+              <div className={`text-2xl font-bold ${totalCalories > dailyCalorieGoal ? 'text-red-600' : 'text-green-600'}`}>
+                {Math.max(0, dailyCalorieGoal - totalCalories).toFixed(0)}
+              </div>
+              <div className="text-sm text-gray-600">Remaining</div>
+            </div>
+          </div>
+          <div className="mt-4">
+            <div className="w-full bg-gray-200 rounded-full h-4">
+              <div
+                className={`h-4 rounded-full ${totalCalories > dailyCalorieGoal ? 'bg-red-500' : 'bg-green-500'}`}
+                style={{ width: `${Math.min(100, (totalCalories / dailyCalorieGoal) * 100)}%` }}
+              ></div>
+            </div>
+            <div className="text-xs text-gray-500 mt-1 text-center">
+              {((totalCalories / dailyCalorieGoal) * 100).toFixed(1)}% of daily goal
+            </div>
           </div>
         </div>
-        <div className="mt-4">
-          <div className="w-full bg-gray-200 rounded-full h-4">
-            <div
-              className={`h-4 rounded-full ${totalCalories > dailyCalorieGoal ? 'bg-red-500' : 'bg-green-500'}`}
-              style={{ width: `${Math.min(100, (totalCalories / dailyCalorieGoal) * 100)}%` }}
-            ></div>
-          </div>
-          <div className="text-xs text-gray-500 mt-1 text-center">
-            {((totalCalories / dailyCalorieGoal) * 100).toFixed(1)}% of daily goal
+
+        {/* Macronutrients Section */}
+        <div>
+          <h4 className="text-lg font-medium mb-3">Macronutrients</h4>
+          <div className="space-y-4">
+            {/* Protein */}
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-medium text-purple-700">Protein</span>
+                <span className="text-xs text-gray-500">
+                  {totalProtein.toFixed(1)}g / {dailyProteinGoal}g
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-3">
+                <div
+                  className="h-3 rounded-full bg-purple-500"
+                  style={{ width: `${Math.min(100, (totalProtein / dailyProteinGoal) * 100)}%` }}
+                ></div>
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                {Math.max(0, dailyProteinGoal - totalProtein).toFixed(1)}g remaining
+              </div>
+            </div>
+
+            {/* Carbs */}
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-medium text-yellow-700">Carbs</span>
+                <span className="text-xs text-gray-500">
+                  {totalCarbs.toFixed(1)}g / {dailyCarbsGoal}g
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-3">
+                <div
+                  className="h-3 rounded-full bg-yellow-500"
+                  style={{ width: `${Math.min(100, (totalCarbs / dailyCarbsGoal) * 100)}%` }}
+                ></div>
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                {Math.max(0, dailyCarbsGoal - totalCarbs).toFixed(1)}g remaining
+              </div>
+            </div>
+
+            {/* Fat */}
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-medium text-red-700">Fat</span>
+                <span className="text-xs text-gray-500">
+                  {totalFat.toFixed(1)}g / {dailyFatGoal}g
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-3">
+                <div
+                  className="h-3 rounded-full bg-red-500"
+                  style={{ width: `${Math.min(100, (totalFat / dailyFatGoal) * 100)}%` }}
+                ></div>
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                {Math.max(0, dailyFatGoal - totalFat).toFixed(1)}g remaining
+              </div>
+            </div>
+
+            {/* Fiber */}
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-medium text-green-700">Fiber</span>
+                <span className="text-xs text-gray-500">
+                  {totalFiber.toFixed(1)}g consumed
+                </span>
+              </div>
+              <div className="text-xs text-gray-500">
+                Recommended: 25-30g daily
+              </div>
+            </div>
           </div>
         </div>
       </div>

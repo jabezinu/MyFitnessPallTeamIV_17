@@ -13,7 +13,6 @@ class ExerciseDiaryController extends Controller
         $validator = Validator::make($request->all(), [
             'date' => 'nullable|date',
         ]);
-
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
@@ -29,7 +28,7 @@ class ExerciseDiaryController extends Controller
 
         $entries = ExerciseDiaryEntry::with('exercise')
             ->where('user_id', $request->user()->id)
-            ->where('logged_date', $date)
+            ->whereDate('logged_date', $date)
             ->get();
 
         return response()->json([
