@@ -39,6 +39,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/food-diary/{entry}', [FoodDiaryController::class, 'update']);
     Route::delete('/food-diary/{entry}', [FoodDiaryController::class, 'destroy']);
     Route::post('/food-diary/quick-add', [FoodDiaryController::class, 'quickAdd']);
+    Route::post('/food-diary/copy-yesterday', [FoodDiaryController::class, 'copyYesterday']);
+    Route::post('/food-diary/copy-from-date', [FoodDiaryController::class, 'copyFromDate']);
+    Route::post('/food-diary/copy-to-date', [FoodDiaryController::class, 'copyToDate']);
 
     // Exercises
     Route::get('/exercises/search', [ExerciseController::class, 'search']);

@@ -5,12 +5,22 @@ export default function FoodDiary() {
   const [entries, setEntries] = useState([])
   const [loading, setLoading] = useState(true)
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
+  const [dailyCalorieGoal, setDailyCalorieGoal] = useState(2000)
+  const [totalCalories, setTotalCalories] = useState(0)
   const [showAddForm, setShowAddForm] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const [selectedFood, setSelectedFood] = useState(null)
   const [quantity, setQuantity] = useState(1)
   const [mealType, setMealType] = useState('breakfast')
+  const [showQuickAddForm, setShowQuickAddForm] = useState(false)
+  const [quickCalories, setQuickCalories] = useState('')
+  const [quickDescription, setQuickDescription] = useState('')
+  const [showCopyFromDateForm, setShowCopyFromDateForm] = useState(false)
+  const [copyFromDate, setCopyFromDate] = useState('')
+  const [showCopyToDateForm, setShowCopyToDateForm] = useState(false)
+  const [copyToDate, setCopyToDate] = useState('')
+  const [currentMealType, setCurrentMealType] = useState('')
 
   useEffect(() => {
     fetchEntries()
@@ -19,7 +29,12 @@ export default function FoodDiary() {
   const fetchEntries = async () => {
     try {
       const response = await foodAPI.getFoodDiary(date)
-      setEntries(response.data.data || [])
+      console.log('API Response:', response.data)
+      const entriesData = response.data.data.entries || []
+      console.log('Entries:', entriesData)
+      setEntries(entriesData)
+      setDailyCalorieGoal(response.data.data.daily_calorie_goal || 2000)
+      setTotalCalories(response.data.data.total_calories || 0)
     } catch (error) {
       console.error('Error fetching food diary:', error)
     } finally {
@@ -60,7 +75,9 @@ export default function FoodDiary() {
         serving_unit: selectedFood.serving_unit,
         logged_date: date
       }
-      await foodAPI.addFoodEntry(entry)
+      console.log('Adding entry:', entry)
+      const response = await foodAPI.addFoodEntry(entry)
+      console.log('Add response:', response)
       setShowAddForm(false)
       setSelectedFood(null)
       setSearchQuery('')
@@ -80,11 +97,74 @@ export default function FoodDiary() {
     }
   }
 
-  const meals = ['breakfast', 'lunch', 'dinner', 'snacks']
+  const handleQuickAdd = async () => {
+    if (!quickCalories || !currentMealType) return
+
+    try {
+      await foodAPI.quickAdd({
+        meal_type: currentMealType,
+        calories: parseFloat(quickCalories),
+        logged_date: date,
+        description: quickDescription
+      })
+      setShowQuickAddForm(false)
+      setQuickCalories('')
+      setQuickDescription('')
+      fetchEntries()
+    } catch (error) {
+      console.error('Error adding quick calories:', error)
+    }
+  }
+
+  const handleCopyYesterday = async () => {
+    try {
+      await foodAPI.copyYesterday(date)
+      fetchEntries()
+    } catch (error) {
+      console.error('Error copying from yesterday:', error)
+    }
+  }
+
+  const handleCopyFromDate = async () => {
+    if (!copyFromDate) return
+
+    try {
+      await foodAPI.copyFromDate(copyFromDate, date)
+      setShowCopyFromDateForm(false)
+      setCopyFromDate('')
+      fetchEntries()
+    } catch (error) {
+      console.error('Error copying from date:', error)
+    }
+  }
+
+  const handleCopyToDate = async () => {
+    if (!copyToDate) return
+
+    try {
+      await foodAPI.copyToDate(date, copyToDate)
+      setShowCopyToDateForm(false)
+      setCopyToDate('')
+      // No need to fetch entries since we're copying to another date
+    } catch (error) {
+      console.error('Error copying to date:', error)
+    }
+  }
+
+  const openQuickAddForm = (mealType) => {
+    setCurrentMealType(mealType)
+    setShowQuickAddForm(true)
+  }
+
+  const meals = ['breakfast', 'lunch', 'dinner', 'snack']
   const mealEntries = meals.reduce((acc, meal) => {
     acc[meal] = entries.filter(entry => entry.meal_type === meal)
     return acc
   }, {})
+
+  console.log('Meals:', meals)
+  console.log('Entries:', entries)
+  console.log('MealEntries:', mealEntries)
 
   if (loading) {
     return <div className="text-center py-8">Loading...</div>
@@ -193,30 +273,231 @@ export default function FoodDiary() {
         </div>
       )}
 
+      {showQuickAddForm && (
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h3 className="text-lg font-semibold mb-4">Quick Add Calories</h3>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Calories</label>
+              <input
+                type="number"
+                value={quickCalories}
+                onChange={(e) => setQuickCalories(e.target.value)}
+                placeholder="Enter calories"
+                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+                min="0"
+                step="0.1"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Description (optional)</label>
+              <input
+                type="text"
+                value={quickDescription}
+                onChange={(e) => setQuickDescription(e.target.value)}
+                placeholder="e.g., Apple, Banana"
+                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+              />
+            </div>
+            <div className="flex space-x-2">
+              <button
+                onClick={handleQuickAdd}
+                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+              >
+                Add Calories
+              </button>
+              <button
+                onClick={() => {
+                  setShowQuickAddForm(false)
+                  setQuickCalories('')
+                  setQuickDescription('')
+                }}
+                className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCopyFromDateForm && (
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h3 className="text-lg font-semibold mb-4">Copy from Date</h3>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Source Date</label>
+              <input
+                type="date"
+                value={copyFromDate}
+                onChange={(e) => setCopyFromDate(e.target.value)}
+                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+              />
+            </div>
+            <div className="flex space-x-2">
+              <button
+                onClick={handleCopyFromDate}
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+              >
+                Copy Entries
+              </button>
+              <button
+                onClick={() => {
+                  setShowCopyFromDateForm(false)
+                  setCopyFromDate('')
+                }}
+                className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCopyToDateForm && (
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h3 className="text-lg font-semibold mb-4">Copy to Date</h3>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Target Date</label>
+              <input
+                type="date"
+                value={copyToDate}
+                onChange={(e) => setCopyToDate(e.target.value)}
+                className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
+              />
+            </div>
+            <div className="flex space-x-2">
+              <button
+                onClick={handleCopyToDate}
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+              >
+                Copy Entries
+              </button>
+              <button
+                onClick={() => {
+                  setShowCopyToDateForm(false)
+                  setCopyToDate('')
+                }}
+                className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="space-y-4">
         {meals.map(meal => (
           <div key={meal} className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-xl font-semibold capitalize mb-4">{meal}</h3>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold capitalize">{meal === 'snack' ? 'Snacks' : meal}</h3>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => {
+                    setMealType(meal)
+                    setShowAddForm(true)
+                  }}
+                  className="bg-green-600 text-white px-3 py-1 rounded-md hover:bg-green-700 text-sm"
+                >
+                  Add Food
+                </button>
+                <div className="relative">
+                  <button
+                    onClick={() => {
+                      const dropdown = document.getElementById(`quick-food-${meal}`)
+                      dropdown.classList.toggle('hidden')
+                    }}
+                    className="bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 text-sm"
+                  >
+                    Quick Food ▼
+                  </button>
+                  <div id={`quick-food-${meal}`} className="absolute right-0 mt-1 w-48 bg-white border border-gray-300 rounded-md shadow-lg z-10 hidden">
+                    <div className="py-1">
+                      <button
+                        onClick={() => {
+                          openQuickAddForm(meal)
+                          document.getElementById(`quick-food-${meal}`).classList.add('hidden')
+                        }}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        Quick add calories
+                      </button>
+                      <button
+                        onClick={() => {
+                          handleCopyYesterday(meal)
+                          document.getElementById(`quick-food-${meal}`).classList.add('hidden')
+                        }}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        Copy yesterday
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowCopyFromDateForm(true)
+                          document.getElementById(`quick-food-${meal}`).classList.add('hidden')
+                        }}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        Copy from date
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowCopyToDateForm(true)
+                          document.getElementById(`quick-food-${meal}`).classList.add('hidden')
+                        }}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        Copy to date
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
             {mealEntries[meal].length === 0 ? (
-              <p className="text-gray-500">No entries for {meal}</p>
+              <p className="text-gray-500">No entries for {meal === 'snack' ? 'Snacks' : meal}</p>
             ) : (
               <div className="space-y-2">
-                {mealEntries[meal].map(entry => (
-                  <div key={entry.id} className="flex justify-between items-center p-3 bg-gray-50 rounded">
-                    <div>
-                      <span className="font-medium">{entry.food_item.name}</span>
-                      <span className="text-gray-600 ml-2">
-                        {entry.quantity} {entry.serving_unit} - {entry.calories} cal
-                      </span>
+                {mealEntries[meal].map(entry => {
+                  const foodItem = entry.food_item
+                  const multiplier = entry.quantity / foodItem.serving_size
+                  const protein = (foodItem.protein_g || 0) * multiplier
+                  const carbs = (foodItem.carbs_g || 0) * multiplier
+                  const fat = (foodItem.fat_g || 0) * multiplier
+                  const fiber = (foodItem.fiber_g || 0) * multiplier
+                  const sugar = (foodItem.sugar_g || 0) * multiplier
+                  const sodium = (foodItem.sodium_mg || 0) * multiplier
+
+                  return (
+                    <div key={entry.id} className="p-3 bg-gray-50 rounded">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="font-medium">{foodItem.name}</div>
+                          <div className="text-sm text-gray-600">
+                            {entry.quantity} {entry.serving_unit} - {entry.calories} cal
+                          </div>
+                          <div className="text-xs text-gray-500 mt-1 grid grid-cols-2 gap-1">
+                            <span>Protein: {protein.toFixed(1)}g</span>
+                            <span>Carbs: {carbs.toFixed(1)}g</span>
+                            <span>Fat: {fat.toFixed(1)}g</span>
+                            <span>Fiber: {fiber.toFixed(1)}g</span>
+                            <span>Sugar: {sugar.toFixed(1)}g</span>
+                            <span>Sodium: {sodium.toFixed(0)}mg</span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => deleteEntry(entry.id)}
+                          className="text-red-600 hover:text-red-800 ml-2"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
-                    <button
-                      onClick={() => deleteEntry(entry.id)}
-                      className="text-red-600 hover:text-red-800"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                ))}
+                  )
+                })}
                 <div className="pt-2 border-t">
                   <strong>Total: {mealEntries[meal].reduce((sum, entry) => sum + entry.calories, 0)} calories</strong>
                 </div>
@@ -224,6 +505,38 @@ export default function FoodDiary() {
             )}
           </div>
         ))}
+      </div>
+
+      {/* Daily Summary */}
+      <div className="bg-white p-6 rounded-lg shadow">
+        <h3 className="text-xl font-semibold mb-4">Daily Summary</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-blue-600">{totalCalories}</div>
+            <div className="text-sm text-gray-600">Calories Consumed</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-green-600">{dailyCalorieGoal}</div>
+            <div className="text-sm text-gray-600">Daily Goal</div>
+          </div>
+          <div className="text-center">
+            <div className={`text-2xl font-bold ${totalCalories > dailyCalorieGoal ? 'text-red-600' : 'text-green-600'}`}>
+              {Math.max(0, dailyCalorieGoal - totalCalories)}
+            </div>
+            <div className="text-sm text-gray-600">Remaining</div>
+          </div>
+        </div>
+        <div className="mt-4">
+          <div className="w-full bg-gray-200 rounded-full h-4">
+            <div
+              className={`h-4 rounded-full ${totalCalories > dailyCalorieGoal ? 'bg-red-500' : 'bg-green-500'}`}
+              style={{ width: `${Math.min(100, (totalCalories / dailyCalorieGoal) * 100)}%` }}
+            ></div>
+          </div>
+          <div className="text-xs text-gray-500 mt-1 text-center">
+            {((totalCalories / dailyCalorieGoal) * 100).toFixed(1)}% of daily goal
+          </div>
+        </div>
       </div>
     </div>
   )

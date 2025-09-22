@@ -32,9 +32,19 @@ class FoodDiaryController extends Controller
             ->where('logged_date', $date)
             ->get();
 
+        $userGoal = \App\Models\UserGoal::where('user_id', $request->user()->id)
+            ->where('is_active', true)
+            ->first();
+
+        $dailyCalorieGoal = $userGoal ? $userGoal->daily_calorie_goal : 2000; // Default to 2000 if no goal set
+
         return response()->json([
             'success' => true,
-            'data' => $entries,
+            'data' => [
+                'entries' => $entries,
+                'daily_calorie_goal' => $dailyCalorieGoal,
+                'total_calories' => $entries->sum('calories')
+            ],
             'message' => 'Food diary entries retrieved successfully'
         ]);
     }
@@ -170,6 +180,142 @@ class FoodDiaryController extends Controller
             'success' => true,
             'data' => $entry,
             'message' => 'Quick food entry added successfully'
+        ], 201);
+    }
+
+    public function copyYesterday(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'target_date' => 'required|date',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'VALIDATION_ERROR',
+                    'message' => 'Invalid input data',
+                    'details' => $validator->errors()
+                ]
+            ], 400);
+        }
+
+        $yesterday = \Carbon\Carbon::parse($request->target_date)->subDay()->toDateString();
+
+        $yesterdayEntries = FoodDiaryEntry::where('user_id', $request->user()->id)
+            ->where('logged_date', $yesterday)
+            ->get();
+
+        $copiedEntries = [];
+        foreach ($yesterdayEntries as $entry) {
+            $newEntry = FoodDiaryEntry::create([
+                'user_id' => $request->user()->id,
+                'food_item_id' => $entry->food_item_id,
+                'meal_type' => $entry->meal_type,
+                'quantity' => $entry->quantity,
+                'serving_unit' => $entry->serving_unit,
+                'calories' => $entry->calories,
+                'logged_date' => $request->target_date,
+                'notes' => $entry->notes,
+                'logged_at' => now(),
+            ]);
+            $copiedEntries[] = $newEntry->load('foodItem');
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $copiedEntries,
+            'message' => 'Food diary entries copied from yesterday successfully'
+        ], 201);
+    }
+
+    public function copyFromDate(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'source_date' => 'required|date',
+            'target_date' => 'required|date',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'VALIDATION_ERROR',
+                    'message' => 'Invalid input data',
+                    'details' => $validator->errors()
+                ]
+            ], 400);
+        }
+
+        $sourceEntries = FoodDiaryEntry::where('user_id', $request->user()->id)
+            ->where('logged_date', $request->source_date)
+            ->get();
+
+        $copiedEntries = [];
+        foreach ($sourceEntries as $entry) {
+            $newEntry = FoodDiaryEntry::create([
+                'user_id' => $request->user()->id,
+                'food_item_id' => $entry->food_item_id,
+                'meal_type' => $entry->meal_type,
+                'quantity' => $entry->quantity,
+                'serving_unit' => $entry->serving_unit,
+                'calories' => $entry->calories,
+                'logged_date' => $request->target_date,
+                'notes' => $entry->notes,
+                'logged_at' => now(),
+            ]);
+            $copiedEntries[] = $newEntry->load('foodItem');
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $copiedEntries,
+            'message' => 'Food diary entries copied from date successfully'
+        ], 201);
+    }
+
+    public function copyToDate(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'source_date' => 'required|date',
+            'target_date' => 'required|date',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'error' => [
+                    'code' => 'VALIDATION_ERROR',
+                    'message' => 'Invalid input data',
+                    'details' => $validator->errors()
+                ]
+            ], 400);
+        }
+
+        $sourceEntries = FoodDiaryEntry::where('user_id', $request->user()->id)
+            ->where('logged_date', $request->source_date)
+            ->get();
+
+        $copiedEntries = [];
+        foreach ($sourceEntries as $entry) {
+            $newEntry = FoodDiaryEntry::create([
+                'user_id' => $request->user()->id,
+                'food_item_id' => $entry->food_item_id,
+                'meal_type' => $entry->meal_type,
+                'quantity' => $entry->quantity,
+                'serving_unit' => $entry->serving_unit,
+                'calories' => $entry->calories,
+                'logged_date' => $request->target_date,
+                'notes' => $entry->notes,
+                'logged_at' => now(),
+            ]);
+            $copiedEntries[] = $newEntry->load('foodItem');
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $copiedEntries,
+            'message' => 'Food diary entries copied to date successfully'
         ], 201);
     }
 }
